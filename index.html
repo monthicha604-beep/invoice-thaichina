@@ -7,6 +7,27 @@
 
 <style>
   @media print {
+
+  .container {
+    width: 210mm;
+    padding: 15mm;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .footer {
+    page-break-inside: avoid;
+  }
+
+}
+  @media print {
   body {
     background: white;
   }
@@ -39,6 +60,7 @@ body {
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  padding-bottom: 80px;
 }
 h1 {
   text-align: center;
@@ -123,7 +145,7 @@ th, td {
 
 <h3 id="summary"></h3>
 
-<div class="footer">
+<div class="footer" style="page-break-before: always;">
   <div>
     ผู้อนุมัติ
     <div class="line"></div>
