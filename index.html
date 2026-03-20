@@ -2,32 +2,15 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Invoice System</title>
+<title>Invoice Pro System</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  font-family:'Sarabun';
-  background:#f4f6f9;
-  margin:0;
-}
-
-.nav{
-  background:#111;
-  color:#fff;
-  padding:12px;
-  display:flex;
-  gap:15px;
-}
-
-.nav button{
-  background:none;
-  border:none;
-  color:#fff;
-  cursor:pointer;
-  font-size:14px;
-}
+body{font-family:'Sarabun';background:#f4f6f9;margin:0}
+.nav{background:#111;color:#fff;padding:12px;display:flex;gap:10px}
+.nav button{background:none;border:none;color:#fff;cursor:pointer}
 
 .container{
   width:210mm;
@@ -38,68 +21,25 @@ body{
   box-shadow:0 5px 20px rgba(0,0,0,0.1);
 }
 
-/* HEADER */
-.header{
-  display:flex;
-  justify-content:space-between;
-  margin-top:20px;
-}
-
+.header{display:flex;justify-content:space-between}
 .left,.right{width:48%}
 .right{text-align:right}
 
-/* INPUT */
-input,select{
-  width:100%;
-  padding:6px;
-  margin:4px 0;
-  border:1px solid #ccc;
-}
+input,select{width:100%;padding:6px;margin:4px 0}
 
-/* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+th{background:#eee}
 
-th,td{
-  border:1px solid #ddd;
-  padding:6px;
-  text-align:center;
-}
+button{background:#000;color:#fff;padding:8px;border:none;margin-top:6px}
 
-th{
-  background:#f2f2f2;
-}
-
-/* BUTTON */
-button{
-  background:#000;
-  color:#fff;
-  padding:8px;
-  border:none;
-  margin-top:6px;
-  cursor:pointer;
-}
-
-/* FOOTER */
-.footer{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  margin-top:40px;
-  text-align:center;
-}
-
-.line{
-  border-bottom:1px solid #000;
-  margin-top:30px;
-}
+.footer{display:grid;grid-template-columns:repeat(4,1fr);margin-top:40px;text-align:center}
+.line{border-bottom:1px solid #000;margin-top:30px}
 
 @media print{
-  body{background:#fff}
-  .nav,button,input,select{display:none}
-  .container{box-shadow:none}
+.nav,button,input,select{display:none}
+body{background:#fff}
+.container{box-shadow:none}
 }
 </style>
 </head>
@@ -110,6 +50,7 @@ button{
 <button onclick="showPage('bill')">ออกบิล</button>
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('dashboard')">Dashboard</button>
+<button onclick="showPage('calculator')">เครื่องคิดเลข</button>
 </div>
 
 <!-- BILL -->
@@ -121,35 +62,38 @@ button{
 THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพมหานคร<br>
 เลขผู้เสียภาษี: 0103566005842
-<h2>ใบกำกับภาษี / INVOICE</h2>
+<h2 id="docType">ใบกำกับภาษี</h2>
 </div>
+
+<select onchange="changeDocType(this.value)">
+<option value="invoice">ใบกำกับภาษี</option>
+<option value="quote">ใบเสนอราคา</option>
+<option value="receipt">ใบเสร็จ</option>
+</select>
 
 <div class="header">
 
 <div class="left">
 <select id="customerSelect" onchange="selectCustomer()"></select>
-
 <input id="customer" placeholder="ลูกค้า">
 <input id="address" placeholder="ที่อยู่">
-
 <button onclick="saveCustomer()">บันทึกลูกค้า</button>
 </div>
 
 <div class="right">
 <p id="invoiceNo"></p>
 <input type="date" id="date">
-
 <button onclick="prevInvoice()">⬅️</button>
 <button onclick="resetInvoice()">ตั้งเลข</button>
 </div>
 
 </div>
 
-<h3>รายการสินค้า</h3>
+<h3>สินค้า</h3>
 
 <input id="name" placeholder="สินค้า">
 <input id="qty" type="number" placeholder="จำนวน">
-<input id="price" type="number" placeholder="ราคาต่อหน่วย">
+<input id="price" type="number" placeholder="ราคา">
 <input id="discount" type="number" placeholder="ส่วนลด">
 
 <button onclick="addItem()">เพิ่มสินค้า</button>
@@ -157,12 +101,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>รายการสินค้า</th>
-<th>จำนวน</th>
-<th>ราคา</th>
-<th>ส่วนลด</th>
-<th>รวม</th>
+<th>#</th><th>สินค้า</th><th>จำนวน</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -184,22 +123,17 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <!-- HISTORY -->
 <div id="historyPage" class="container" style="display:none">
+<h2>ค้นหาบิล</h2>
 
-<h2>ประวัติบิล</h2>
-
+<input id="searchText" placeholder="เลขบิล/ลูกค้า">
 <input type="date" id="filterDate">
 <input type="month" id="filterMonth">
 
-<button onclick="filterHistory()">ค้นหา</button>
+<button onclick="searchBill()">ค้นหา</button>
 
 <table>
 <thead>
-<tr>
-<th>เลขบิล</th>
-<th>ลูกค้า</th>
-<th>วันที่</th>
-<th>ยอดสุทธิ</th>
-</tr>
+<tr><th>เลขบิล</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th></tr>
 </thead>
 <tbody id="historyTable"></tbody>
 </table>
@@ -210,24 +144,29 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="container" style="display:none">
-
 <h2>Dashboard</h2>
-<p id="totalSales"></p>
+<canvas id="chart"></canvas>
+</div>
 
+<!-- CALCULATOR -->
+<div id="calculatorPage" class="container" style="display:none">
+<h2>เครื่องคิดเลข</h2>
+<input id="calcInput">
+<button onclick="calculate()">=</button>
+<h3 id="calcResult"></h3>
 </div>
 
 <script>
 
-// 🔥 ใส่ API ตรงนี้
-const API_URL = "";
+const API_URL="https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec";
 
 // ===== เลขบิล =====
-let count = localStorage.getItem("invoiceCount") || 0;
+let count=localStorage.getItem("invoiceCount")||0;
 count++;
-localStorage.setItem("invoiceCount", count);
+localStorage.setItem("invoiceCount",count);
 
-let invoiceNumber = "INV-" + String(count).padStart(4,'0');
-invoiceNo.innerText = "เลขที่บิล: " + invoiceNumber;
+let invoiceNumber="INV-"+String(count).padStart(4,'0');
+invoiceNo.innerText=invoiceNumber;
 
 function prevInvoice(){
 count=Math.max(1,count-1);
@@ -236,8 +175,8 @@ location.reload();
 }
 
 function resetInvoice(){
-let num=prompt("ตั้งเลขใหม่");
-if(num){localStorage.setItem("invoiceCount",num);location.reload();}
+let n=prompt("เลขใหม่");
+if(n){localStorage.setItem("invoiceCount",n);location.reload();}
 }
 
 // ===== ลูกค้า =====
@@ -250,10 +189,12 @@ loadCustomers();
 }
 
 function loadCustomers(){
-let html="<option>--ลูกค้า--</option>";
-customers.forEach((c,i)=>html+=`<option value="${i}">${c.name}</option>`);
-customerSelect.innerHTML=html;
+customerSelect.innerHTML="<option>--ลูกค้า--</option>";
+customers.forEach((c,i)=>{
+customerSelect.innerHTML+=`<option value="${i}">${c.name}</option>`;
+});
 }
+
 function selectCustomer(){
 let c=customers[customerSelect.value];
 if(c){customer.value=c.name;address.value=c.address;}
@@ -265,13 +206,7 @@ let items=[];
 
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
-items.push({
-name:name.value,
-qty:+qty.value,
-price:+price.value,
-discount:+discount.value,
-total
-});
+items.push({name:name.value,qty:+qty.value,price:+price.value,discount:+discount.value,total});
 render();
 }
 
@@ -290,14 +225,12 @@ total+=i.total;
 });
 
 table.innerHTML=html;
-
 let vat=total*0.07;
 let grand=total+vat;
-
 summary.innerText=`รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
 }
 
-// ===== บันทึก =====
+// ===== saveBill (แก้ให้แล้ว) =====
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 
 function saveBill(){
@@ -316,54 +249,58 @@ grand
 bills.push(bill);
 localStorage.setItem("bills",JSON.stringify(bills));
 
-// 🔥 ส่งออนไลน์
-fetch(API_URL,{https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec
+// 🔥 ส่งออนไลน์ (แก้แล้ว)
+fetch(API_URL,{
 method:"POST",
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify(bill)
-});
-
-alert("บันทึกเรียบร้อย");
+})
+.then(()=>alert("บันทึกออนไลน์แล้ว ✅"))
+.catch(()=>alert("ส่งข้อมูลไม่สำเร็จ ❌"));
 
 }
 
-// ===== HISTORY =====
-function renderHistory(data){
-let html="";
-data.forEach(b=>{
-html+=`<tr>
-<td>${b.invoice}</td>
-<td>${b.customer}</td>
-<td>${b.date}</td>
-<td>${b.grand}</td>
-</tr>`;
-});
-historyTable.innerHTML=html;
-}
-
-function filterHistory(){
+// ===== search =====
+function searchBill(){
+let text=searchText.value.toLowerCase();
 let d=filterDate.value;
 let m=filterMonth.value;
 
-let f=bills;
-
-if(d)f=bills.filter(b=>b.date===d);
-if(m)f=bills.filter(b=>b.date.startsWith(m));
+let f=bills.filter(b=>
+(!text || b.invoice.toLowerCase().includes(text) || b.customer.toLowerCase().includes(text)) &&
+(!d || b.date===d) &&
+(!m || b.date.startsWith(m))
+);
 
 renderHistory(f);
 }
 
+function renderHistory(data){
+let html="";
+data.forEach(b=>{
+html+=`<tr><td>${b.invoice}</td><td>${b.customer}</td><td>${b.date}</td><td>${b.grand}</td></tr>`;
+});
+historyTable.innerHTML=html;
+}
+
 renderHistory(bills);
 
-// ===== DASHBOARD =====
-function loadDashboard(){
-let total=bills.reduce((s,b)=>s+b.grand,0);
-totalSales.innerText="ยอดขายรวม: "+total;
+// ===== dashboard =====
+let ctx=document.getElementById("chart");
+new Chart(ctx,{
+type:"bar",
+data:{
+labels:bills.map(b=>b.date),
+datasets:[{
+label:"ยอดขาย",
+data:bills.map(b=>b.grand)
+}]
 }
-loadDashboard();
+});
 
-// ===== EXPORT =====
+// ===== export =====
 function exportCSV(){
-let csv="เลขบิล,ลูกค้า,วันที่,ยอด\n";
+let csv="invoice,customer,date,total\n";
 bills.forEach(b=>{
 csv+=`${b.invoice},${b.customer},${b.date},${b.grand}\n`;
 });
@@ -374,11 +311,23 @@ a.download="report.csv";
 a.click();
 }
 
-// ===== PAGE =====
+// ===== calculator =====
+function calculate(){
+calcResult.innerText=eval(calcInput.value);
+}
+
+// ===== page =====
 function showPage(p){
 billPage.style.display=p==="bill"?"block":"none";
 historyPage.style.display=p==="history"?"block":"none";
 dashboardPage.style.display=p==="dashboard"?"block":"none";
+calculatorPage.style.display=p==="calculator"?"block":"none";
+}
+
+function changeDocType(v){
+docType.innerText=
+v==="invoice"?"ใบกำกับภาษี":
+v==="quote"?"ใบเสนอราคา":"ใบเสร็จ";
 }
 
 </script>
