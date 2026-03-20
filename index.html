@@ -2,35 +2,30 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Invoice Pro Premium</title>
+<title>Thai China Invoice System</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  font-family:'Sarabun';
-  background:#eef1f5;
-  margin:0;
-}
+body{font-family:'Sarabun';background:#eef2f7;margin:0}
 
 /* NAV */
 .nav{
-  background:#111;
+  background:#0f172a;
   color:#fff;
   padding:14px;
   display:flex;
-  gap:15px;
+  gap:12px;
 }
 .nav button{
   background:none;
   border:none;
   color:#fff;
   cursor:pointer;
-  font-size:14px;
 }
 
-/* CONTAINER */
+/* CONTAINER A4 */
 .container{
   width:210mm;
   min-height:297mm;
@@ -54,9 +49,8 @@ body{
 input,select{
   width:100%;
   padding:8px;
-  margin:5px 0;
+  margin:4px 0;
   border:1px solid #ddd;
-  border-radius:4px;
 }
 
 /* TABLE */
@@ -68,18 +62,9 @@ table{
 th,td{
   border:1px solid #ddd;
   padding:8px;
+  text-align:center;
 }
-th{background:#f7f7f7}
-
-/* BUTTON */
-button{
-  background:#111;
-  color:#fff;
-  padding:8px;
-  border:none;
-  border-radius:4px;
-  cursor:pointer;
-}
+th{background:#f1f5f9}
 
 /* FOOTER */
 .footer{
@@ -88,39 +73,27 @@ button{
   margin-top:40px;
   text-align:center;
 }
-.line{
-  border-bottom:1px solid #000;
-  margin-top:30px;
-}
+.line{border-bottom:1px solid #000;margin-top:30px}
 
-/* CALCULATOR */
-.calc{
-  max-width:300px;
-  margin:auto;
-}
-.calc input{
-  text-align:right;
-  font-size:20px;
-}
-.calc-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:5px;
-}
-.calc-grid button{
-  padding:15px;
-  font-size:16px;
-}
-
-/* PRINT */
+/* PRINT A4 FIX */
 @media print{
   body{background:#fff}
   .nav,button,input,select{display:none}
   .container{
-    box-shadow:none;
     width:210mm;
     height:297mm;
+    padding:15mm;
+    box-shadow:none;
   }
+}
+
+/* BUTTON */
+button{
+  background:#0f172a;
+  color:#fff;
+  padding:8px;
+  border:none;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -131,7 +104,6 @@ button{
 <button onclick="showPage('bill')">ออกบิล</button>
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('dashboard')">Dashboard</button>
-<button onclick="showPage('calc')">เครื่องคิดเลข</button>
 </div>
 
 <!-- BILL -->
@@ -183,6 +155,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </table>
 
 <h3 id="summary"></h3>
+<h4 id="thaiText"></h4>
 
 <div class="footer">
 <div>ผู้อนุมัติ<div class="line"></div></div>
@@ -191,58 +164,51 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <div>วันที่รับ<div class="line"></div></div>
 </div>
 
-<button onclick="saveBill()">บันทึก</button>
-<button onclick="window.print()">PDF</button>
+<button onclick="INSERT()">💾 บันทึก</button>
+<button onclick="window.print()">📄 PDF</button>
+
+</div>
+
+<!-- HISTORY -->
+<div id="historyPage" class="container" style="display:none">
+
+<input id="search" placeholder="ค้นหา">
+<button onclick="SELECT()">ค้นหา</button>
+
+<table>
+<thead>
+<tr><th>เลขบิล</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th><th>สถานะ</th></tr>
+</thead>
+<tbody id="historyTable"></tbody>
+</table>
 
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="container" style="display:none">
-<h2>Dashboard</h2>
 <canvas id="monthChart"></canvas>
 <canvas id="yearChart"></canvas>
 </div>
 
-<!-- CALCULATOR -->
-<div id="calcPage" class="container" style="display:none">
-<div class="calc">
-<input id="calcDisplay" readonly>
-<div class="calc-grid">
-<button onclick="press('7')">7</button>
-<button onclick="press('8')">8</button>
-<button onclick="press('9')">9</button>
-<button onclick="press('/')">÷</button>
-
-<button onclick="press('4')">4</button>
-<button onclick="press('5')">5</button>
-<button onclick="press('6')">6</button>
-<button onclick="press('*')">×</button>
-
-<button onclick="press('1')">1</button>
-<button onclick="press('2')">2</button>
-<button onclick="press('3')">3</button>
-<button onclick="press('-')">-</button>
-
-<button onclick="press('0')">0</button>
-<button onclick="press('.')">.</button>
-<button onclick="calculate()">=</button>
-<button onclick="press('+')">+</button>
-</div>
-</div>
-</div>
-
 <script>
 
+const API="https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec";
+
+let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 let items=[];
-let bills=[];
 
-let count=localStorage.getItem("invoiceCount")||0;
-count++;
-localStorage.setItem("invoiceCount",count);
+/* GENERATE ID */
+function generateID(){
+let c=localStorage.getItem("invoiceCount")||0;
+c++;
+localStorage.setItem("invoiceCount",c);
+return "INV-"+String(c).padStart(4,'0');
+}
 
-let invoiceNumber="INV-"+String(count).padStart(4,'0');
+let invoiceNumber=generateID();
 invoiceNo.innerText=invoiceNumber;
 
+/* ADD ITEM */
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
 items.push({name:name.value,qty:+qty.value,price:+price.value,discount:+discount.value,total});
@@ -250,58 +216,86 @@ render();
 }
 
 function render(){
-let html="",total=0;
+let html="",subtotal=0;
+
 items.forEach((i,x)=>{
 html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>${i.price}</td><td>${i.discount}</td><td>${i.total}</td></tr>`;
-total+=i.total;
+subtotal+=i.total;
 });
+
 table.innerHTML=html;
 
-let vat=total*0.07;
-let grand=total+vat;
+let vat=subtotal*0.07;
+let total=subtotal+vat;
 
-summary.innerText=`รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
+summary.innerText=`Subtotal ${subtotal} | VAT ${vat.toFixed(2)} | Total ${total.toFixed(2)}`;
+thaiText.innerText=total.toLocaleString("th-TH")+" บาทถ้วน";
 }
 
-function saveBill(){
-let total=items.reduce((s,i)=>s+i.total,0);
-let bill={date:date.value,grand:total};
+/* INSERT */
+function INSERT(){
+
+let subtotal=items.reduce((s,i)=>s+i.total,0);
+let vat=subtotal*0.07;
+let total=subtotal+vat;
+
+let bill={
+id:invoiceNumber,
+customer:customer.value,
+date:date.value,
+total,
+status:"active"
+};
+
 bills.push(bill);
+localStorage.setItem("bills",JSON.stringify(bills));
+
+fetch(API,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(bill)
+});
+
 alert("บันทึกแล้ว");
-updateChart();
 }
+
+/* SELECT */
+function SELECT(){
+let k=search.value.toLowerCase();
+let f=bills.filter(b=>b.id.toLowerCase().includes(k)||b.customer.toLowerCase().includes(k));
+
+let html="";
+f.forEach(b=>{
+html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.date}</td><td>${b.total}</td><td>${b.status}</td></tr>`;
+});
+historyTable.innerHTML=html;
+}
+SELECT();
 
 /* DASHBOARD */
-function updateChart(){
-let months={},years={};
-
+let m={},y={};
 bills.forEach(b=>{
-let m=b.date.slice(0,7);
-let y=b.date.slice(0,4);
+let mo=b.date?.slice(0,7);
+let ye=b.date?.slice(0,4);
 
-months[m]=(months[m]||0)+b.grand;
-years[y]=(years[y]||0)+b.grand;
+m[mo]=(m[mo]||0)+b.total;
+y[ye]=(y[ye]||0)+b.total;
 });
 
-new Chart(monthChart,{type:"bar",
-data:{labels:Object.keys(months),
-datasets:[{label:"รายเดือน",data:Object.values(months)}]}
+new Chart(monthChart,{
+type:"bar",
+data:{labels:Object.keys(m),datasets:[{label:"รายเดือน",data:Object.values(m)}]}
 });
 
-new Chart(yearChart,{type:"line",
-data:{labels:Object.keys(years),
-datasets:[{label:"รายปี",data:Object.values(years)}]}
+new Chart(yearChart,{
+type:"line",
+data:{labels:Object.keys(y),datasets:[{label:"รายปี",data:Object.values(y)}]}
 });
-}
-
-/* CALC */
-function press(v){calcDisplay.value+=v}
-function calculate(){calcDisplay.value=eval(calcDisplay.value)}
 
 function showPage(p){
 billPage.style.display=p==="bill"?"block":"none";
+historyPage.style.display=p==="history"?"block":"none";
 dashboardPage.style.display=p==="dashboard"?"block":"none";
-calcPage.style.display=p==="calc"?"block":"none";
 }
 
 function changeDocType(v){
