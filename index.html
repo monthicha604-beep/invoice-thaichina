@@ -2,44 +2,125 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Invoice Pro System</title>
+<title>Invoice Pro Premium</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{font-family:'Sarabun';background:#f4f6f9;margin:0}
-.nav{background:#111;color:#fff;padding:12px;display:flex;gap:10px}
-.nav button{background:none;border:none;color:#fff;cursor:pointer}
+body{
+  font-family:'Sarabun';
+  background:#eef1f5;
+  margin:0;
+}
 
+/* NAV */
+.nav{
+  background:#111;
+  color:#fff;
+  padding:14px;
+  display:flex;
+  gap:15px;
+}
+.nav button{
+  background:none;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+  font-size:14px;
+}
+
+/* CONTAINER */
 .container{
   width:210mm;
   min-height:297mm;
   margin:20px auto;
   background:#fff;
   padding:20mm;
-  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
 }
 
-.header{display:flex;justify-content:space-between}
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  margin-top:20px;
+}
+
 .left,.right{width:48%}
 .right{text-align:right}
 
-input,select{width:100%;padding:6px;margin:4px 0}
+/* INPUT */
+input,select{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+  border:1px solid #ddd;
+  border-radius:4px;
+}
 
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{border:1px solid #ddd;padding:6px;text-align:center}
-th{background:#eee}
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+}
+th{background:#f7f7f7}
 
-button{background:#000;color:#fff;padding:8px;border:none;margin-top:6px}
+/* BUTTON */
+button{
+  background:#111;
+  color:#fff;
+  padding:8px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
 
-.footer{display:grid;grid-template-columns:repeat(4,1fr);margin-top:40px;text-align:center}
-.line{border-bottom:1px solid #000;margin-top:30px}
+/* FOOTER */
+.footer{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  margin-top:40px;
+  text-align:center;
+}
+.line{
+  border-bottom:1px solid #000;
+  margin-top:30px;
+}
 
+/* CALCULATOR */
+.calc{
+  max-width:300px;
+  margin:auto;
+}
+.calc input{
+  text-align:right;
+  font-size:20px;
+}
+.calc-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:5px;
+}
+.calc-grid button{
+  padding:15px;
+  font-size:16px;
+}
+
+/* PRINT */
 @media print{
-.nav,button,input,select{display:none}
-body{background:#fff}
-.container{box-shadow:none}
+  body{background:#fff}
+  .nav,button,input,select{display:none}
+  .container{
+    box-shadow:none;
+    width:210mm;
+    height:297mm;
+  }
 }
 </style>
 </head>
@@ -50,13 +131,14 @@ body{background:#fff}
 <button onclick="showPage('bill')">ออกบิล</button>
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('dashboard')">Dashboard</button>
+<button onclick="showPage('calc')">เครื่องคิดเลข</button>
 </div>
 
 <!-- BILL -->
 <div id="billPage" class="container">
 
 <div style="text-align:center">
-<img src="logo.png" style="width:100px"><br><br>
+<img src="logo.png" style="width:90px"><br><br>
 <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
 THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพมหานคร<br>
@@ -71,24 +153,18 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </select>
 
 <div class="header">
-
 <div class="left">
-<select id="customerSelect" onchange="selectCustomer()"></select>
 <input id="customer" placeholder="ลูกค้า">
 <input id="address" placeholder="ที่อยู่">
-<button onclick="saveCustomer()">บันทึกลูกค้า</button>
 </div>
 
 <div class="right">
 <p id="invoiceNo"></p>
 <input type="date" id="date">
-<button onclick="prevInvoice()">⬅️</button>
-<button onclick="resetInvoice()">ตั้งเลข</button>
+</div>
 </div>
 
-</div>
-
-<h3>สินค้า</h3>
+<h3>รายการสินค้า</h3>
 
 <input id="name" placeholder="สินค้า">
 <input id="qty" type="number" placeholder="จำนวน">
@@ -107,7 +183,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </table>
 
 <h3 id="summary"></h3>
-<h4 id="thaiText"></h4>
 
 <div class="footer">
 <div>ผู้อนุมัติ<div class="line"></div></div>
@@ -116,86 +191,57 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <div>วันที่รับ<div class="line"></div></div>
 </div>
 
-<button onclick="saveBill()">💾 บันทึกบิล</button>
-<button onclick="window.print()">📄 PDF</button>
-
-</div>
-
-<!-- HISTORY -->
-<div id="historyPage" class="container" style="display:none">
-
-<h2>ค้นหาบิล</h2>
-
-<input id="searchText" placeholder="เลขบิล/ลูกค้า">
-<input type="date" id="filterDate">
-<input type="month" id="filterMonth">
-
-<button onclick="searchBill()">ค้นหา</button>
-
-<table>
-<thead>
-<tr><th>เลขบิล</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th></tr>
-</thead>
-<tbody id="historyTable"></tbody>
-</table>
-
-<button onclick="exportCSV()">Export CSV</button>
+<button onclick="saveBill()">บันทึก</button>
+<button onclick="window.print()">PDF</button>
 
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="container" style="display:none">
 <h2>Dashboard</h2>
-<canvas id="chart"></canvas>
+<canvas id="monthChart"></canvas>
+<canvas id="yearChart"></canvas>
+</div>
+
+<!-- CALCULATOR -->
+<div id="calcPage" class="container" style="display:none">
+<div class="calc">
+<input id="calcDisplay" readonly>
+<div class="calc-grid">
+<button onclick="press('7')">7</button>
+<button onclick="press('8')">8</button>
+<button onclick="press('9')">9</button>
+<button onclick="press('/')">÷</button>
+
+<button onclick="press('4')">4</button>
+<button onclick="press('5')">5</button>
+<button onclick="press('6')">6</button>
+<button onclick="press('*')">×</button>
+
+<button onclick="press('1')">1</button>
+<button onclick="press('2')">2</button>
+<button onclick="press('3')">3</button>
+<button onclick="press('-')">-</button>
+
+<button onclick="press('0')">0</button>
+<button onclick="press('.')">.</button>
+<button onclick="calculate()">=</button>
+<button onclick="press('+')">+</button>
+</div>
+</div>
 </div>
 
 <script>
 
-const API_URL="https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec";
+let items=[];
+let bills=[];
 
-// ===== เลขบิล =====
 let count=localStorage.getItem("invoiceCount")||0;
 count++;
 localStorage.setItem("invoiceCount",count);
 
 let invoiceNumber="INV-"+String(count).padStart(4,'0');
 invoiceNo.innerText=invoiceNumber;
-
-function prevInvoice(){
-count=Math.max(1,count-1);
-localStorage.setItem("invoiceCount",count);
-location.reload();
-}
-
-function resetInvoice(){
-let n=prompt("เลขใหม่");
-if(n){localStorage.setItem("invoiceCount",n);location.reload();}
-}
-
-// ===== ลูกค้า =====
-let customers=JSON.parse(localStorage.getItem("customers")||"[]");
-
-function saveCustomer(){
-customers.push({name:customer.value,address:address.value});
-localStorage.setItem("customers",JSON.stringify(customers));
-loadCustomers();
-}
-
-function loadCustomers(){
-customerSelect.innerHTML="<option>--ลูกค้า--</option>";
-customers.forEach((c,i)=>{
-customerSelect.innerHTML+=`<option value="${i}">${c.name}</option>`;
-});
-}
-
-function selectCustomer(){
-let c=customers[customerSelect.value];
-if(c){customer.value=c.name;address.value=c.address;}
-}
-loadCustomers();
-
-// ===== สินค้า =====
-let items=[];
 
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
@@ -204,104 +250,58 @@ render();
 }
 
 function render(){
-let html="",subtotal=0;
+let html="",total=0;
 items.forEach((i,x)=>{
-html+=`<tr>
-<td>${x+1}</td>
-<td>${i.name}</td>
-<td>${i.qty}</td>
-<td>${i.price}</td>
-<td>${i.discount}</td>
-<td>${i.total}</td>
-</tr>`;
-subtotal+=i.total;
+html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>${i.price}</td><td>${i.discount}</td><td>${i.total}</td></tr>`;
+total+=i.total;
 });
-
 table.innerHTML=html;
 
-let vat=subtotal*0.07;
-let grand=subtotal+vat;
+let vat=total*0.07;
+let grand=total+vat;
 
-summary.innerText=`รวม ${subtotal} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
-thaiText.innerText=grand.toLocaleString("th-TH")+" บาทถ้วน";
+summary.innerText=`รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
 }
-
-// ===== SAVE =====
-let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 
 function saveBill(){
-
-let subtotal=items.reduce((s,i)=>s+i.total,0);
-let vat=subtotal*0.07;
-let grand=subtotal+vat;
-
-let bill={invoice:invoiceNumber,customer:customer.value,date:date.value,grand};
-
+let total=items.reduce((s,i)=>s+i.total,0);
+let bill={date:date.value,grand:total};
 bills.push(bill);
-localStorage.setItem("bills",JSON.stringify(bills));
-
-fetch(API_URL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(bill)
-})
-.then(()=>alert("บันทึกออนไลน์แล้ว"))
-.catch(()=>alert("ผิดพลาด"));
-
+alert("บันทึกแล้ว");
+updateChart();
 }
 
-// ===== SEARCH =====
-function searchBill(){
-let t=searchText.value.toLowerCase();
-let d=filterDate.value;
-let m=filterMonth.value;
+/* DASHBOARD */
+function updateChart(){
+let months={},years={};
 
-let f=bills.filter(b=>
-(!t||b.invoice.toLowerCase().includes(t)||b.customer.toLowerCase().includes(t)) &&
-(!d||b.date===d) &&
-(!m||b.date.startsWith(m))
-);
-
-renderHistory(f);
-}
-
-function renderHistory(data){
-let html="";
-data.forEach(b=>{
-html+=`<tr><td>${b.invoice}</td><td>${b.customer}</td><td>${b.date}</td><td>${b.grand}</td></tr>`;
-});
-historyTable.innerHTML=html;
-}
-renderHistory(bills);
-
-// ===== DASHBOARD =====
-let ctx=document.getElementById("chart");
-new Chart(ctx,{
-type:"bar",
-data:{
-labels:bills.map(b=>b.date),
-datasets:[{label:"ยอดขาย",data:bills.map(b=>b.grand)}]
-}
-});
-
-// ===== EXPORT =====
-function exportCSV(){
-let csv="invoice,customer,date,total\n";
 bills.forEach(b=>{
-csv+=`${b.invoice},${b.customer},${b.date},${b.grand}\n`;
+let m=b.date.slice(0,7);
+let y=b.date.slice(0,4);
+
+months[m]=(months[m]||0)+b.grand;
+years[y]=(years[y]||0)+b.grand;
 });
-let blob=new Blob([csv]);
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="report.csv";
-a.click();
+
+new Chart(monthChart,{type:"bar",
+data:{labels:Object.keys(months),
+datasets:[{label:"รายเดือน",data:Object.values(months)}]}
+});
+
+new Chart(yearChart,{type:"line",
+data:{labels:Object.keys(years),
+datasets:[{label:"รายปี",data:Object.values(years)}]}
+});
 }
 
-// ===== PAGE =====
+/* CALC */
+function press(v){calcDisplay.value+=v}
+function calculate(){calcDisplay.value=eval(calcDisplay.value)}
+
 function showPage(p){
 billPage.style.display=p==="bill"?"block":"none";
-historyPage.style.display=p==="history"?"block":"none";
 dashboardPage.style.display=p==="dashboard"?"block":"none";
+calcPage.style.display=p==="calc"?"block":"none";
 }
 
 function changeDocType(v){
