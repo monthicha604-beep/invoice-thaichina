@@ -13,20 +13,19 @@ body{font-family:'Sarabun';background:#eef2f7;margin:0}
 .nav{background:#111;color:#fff;padding:12px;display:flex;gap:10px}
 .nav button{background:none;border:none;color:#fff;cursor:pointer}
 
-/* GOLD FRAME */
 .container{
 width:210mm;
 min-height:297mm;
 margin:20px auto;
 background:#fff;
-padding:15mm;
+padding:12mm;
 border:3px solid gold;
 box-shadow:0 8px 25px rgba(0,0,0,0.1)
 }
 
-.header{display:flex;justify-content:space-between;margin-top:15px}
-.left,.right{width:48%}
-.right{text-align:right}
+.header{display:flex;justify-content:space-between}
+.left{width:55%}
+.right{width:40%;text-align:right}
 
 input,select{width:100%;padding:6px;margin:4px 0;border:1px solid #ddd}
 
@@ -34,12 +33,16 @@ table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:6px;text-align:center}
 th{background:#f1f5f9}
 
+.summary{
+text-align:right;
+margin-top:10px;
+}
+
 .footer{
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:10px;
-margin-top:30px;
-text-align:center
+margin-top:20px;
 }
 
 .box{
@@ -47,21 +50,9 @@ border:1px solid #000;
 height:50px;
 display:flex;
 align-items:flex-end;
-justify-content:center
+justify-content:center;
 }
 
-.topCustomers button{margin:3px}
-
-@media print{
-.nav,button,input,select{display:none}
-.container{
-width:210mm;
-height:297mm;
-border:2px solid gold;
-}
-}
-
-/* POPUP */
 .modal{
 display:none;
 position:fixed;
@@ -76,8 +67,11 @@ align-items:center;
 background:#fff;
 padding:20px;
 border-radius:10px;
-text-align:center;
-width:300px;
+}
+
+@media print{
+.nav,button,input,select{display:none}
+.container{width:210mm;height:297mm}
 }
 </style>
 </head>
@@ -90,18 +84,13 @@ width:300px;
 <button onclick="showPage('dashboard')">Dashboard</button>
 </div>
 
-<!-- BILL -->
 <div id="billPage" class="container">
 
-<div style="text-align:center;line-height:1.6;">
-<img src="logo.png" style="width:80px"><br><br>
-
+<div style="text-align:center">
+<img src="logo.png" style="width:80px"><br>
 <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
-3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน<br>
-กรุงเทพมหานคร 10150<br>
-เลขผู้เสียภาษี: 0103566005842
-
+3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพฯ<br>
+เลขผู้เสียภาษี 0103566005842
 <h2 id="docType">ใบกำกับภาษี</h2>
 </div>
 
@@ -114,7 +103,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <div class="header">
 
 <div class="left">
-
 <input id="customerSearch" placeholder="ค้นหาลูกค้า" oninput="searchCustomer()">
 <div id="suggestions"></div>
 
@@ -122,39 +110,42 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <input id="customer" placeholder="ลูกค้า">
 <input id="address" placeholder="ที่อยู่">
-<input id="customerTax" placeholder="เลขผู้เสียภาษี">
-
-<button onclick="saveCustomer()">บันทึกลูกค้า</button>
-
+<input id="customerTax" placeholder="เลขภาษี">
+<button onclick="saveCustomer()">บันทึก</button>
 </div>
 
 <div class="right">
 <p id="invoiceNo"></p>
 <input type="date" id="date">
+<button onclick="prevInvoice()">ย้อนเลข</button>
 </div>
 
 </div>
 
-<!-- ITEMS -->
-<input id="name" placeholder="รายการสินค้า">
-<input id="qty" type="number" placeholder="จำนวน">
-<input id="dozen" type="number" placeholder="โหล">
-<input id="yard" type="number" placeholder="หลา">
-<input id="price" type="number" placeholder="ราคา">
-<input id="discount" type="number" placeholder="ส่วนลด">
+<!-- ITEM -->
+<input id="name" placeholder="สินค้า">
+<input id="qty" placeholder="จำนวน">
+<input id="dozen" placeholder="โหล">
+<input id="yard" placeholder="หลา">
+<input id="price" placeholder="ราคา">
+<input id="discount" placeholder="ส่วนลด">
 
 <button onclick="addItem()">เพิ่มสินค้า</button>
 
 <table>
 <thead>
 <tr>
-<th>ลำดับ</th><th>รายการสินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
+<th>#</th><th>สินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
 </table>
 
-<h3 id="summary"></h3>
+<div class="summary">
+<p id="subtotal"></p>
+<p id="vat"></p>
+<p id="total"></p>
+</div>
 
 <div class="footer">
 <div class="box">ผู้อนุมัติ</div>
@@ -168,70 +159,102 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 </div>
 
-<!-- PAYMENT POPUP -->
+<!-- PAYMENT -->
 <div id="paymentModal" class="modal">
 <div class="modal-box">
-
-<h3>เลือกการชำระเงิน</h3>
-
-<button onclick="chooseCash()">เงินสด</button>
-<button onclick="chooseCredit()">CREDIT</button>
-
-<br><br>
-
+<h3>ชำระเงิน</h3>
+<button onclick="cash()">เงินสด</button>
+<button onclick="credit()">CREDIT</button>
 <div id="creditBox" style="display:none">
 <input type="date" id="dueDate">
-<button onclick="confirmCredit()">ยืนยัน CREDIT</button>
-</div>
-
+<button onclick="confirmCredit()">ยืนยัน</button>
 </div>
 </div>
-
-<!-- DASHBOARD -->
-<div id="dashboardPage" class="container" style="display:none">
-<canvas id="paymentChart"></canvas>
 </div>
 
 <script>
 
 const API="https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec";
 
-let customers=JSON.parse(localStorage.getItem("customers")||"[]");
-let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 let items=[];
-let docPrefix="INV";
+let bills=JSON.parse(localStorage.getItem("bills")||"[]");
+let customers=JSON.parse(localStorage.getItem("customers")||"[]");
 
-/* ID */
-function generateID(){
-let c=localStorage.getItem(docPrefix)||0;
-c++;
-localStorage.setItem(docPrefix,c);
-invoiceNo.innerText=docPrefix+"-"+String(c).padStart(4,'0');
-}
-generateID();
+let prefix="INV";
 
-/* DOC TYPE */
 function changeDocType(v){
-docPrefix=v;
+prefix=v;
 generateID();
 }
 
-/* CUSTOMER */
-function saveCustomer(){
-customers.push({name:customer.value,address:address.value,tax:customerTax.value});
-localStorage.setItem("customers",JSON.stringify(customers));
+function generateID(){
+let c=localStorage.getItem(prefix)||0;
+c++;
+localStorage.setItem(prefix,c);
+invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
+}
+generateID();
+
+function prevInvoice(){
+let c=localStorage.getItem(prefix)||1;
+c--;
+localStorage.setItem(prefix,c);
+generateID();
 }
 
-/* ITEMS */
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
-items.push({total});
+items.push({name:name.value,qty,dozen,yard,price,discount,total});
 render();
 }
 
 function render(){
-let sum=items.reduce((s,i)=>s+i.total,0);
-summary.innerText="รวม "+sum;
+let html="",sum=0;
+items.forEach((i,x)=>{
+html+=`<tr>
+<td>${x+1}</td>
+<td>${i.name}</td>
+<td>${i.qty.value}</td>
+<td>${i.dozen.value}</td>
+<td>${i.yard.value}</td>
+<td>${i.price.value}</td>
+<td>${i.discount.value}</td>
+<td>${i.total}</td>
+</tr>`;
+sum+=i.total;
+});
+table.innerHTML=html;
+
+let vatVal=sum*0.07;
+subtotal.innerText="Subtotal: "+sum;
+vat.innerText="VAT: "+vatVal;
+total.innerText="Total: "+(sum+vatVal);
+}
+
+/* CUSTOMER */
+function saveCustomer(){
+customers.push({
+name:customer.value,
+address:address.value,
+tax:customerTax.value
+});
+localStorage.setItem("customers",JSON.stringify(customers));
+}
+
+function searchCustomer(){
+let val=customerSearch.value.toLowerCase();
+let html="";
+customers.filter(c=>c.name.toLowerCase().includes(val))
+.forEach(c=>{
+html+=`<div onclick="selectCust('${c.name}','${c.address}','${c.tax}')">${c.name}</div>`;
+});
+suggestions.innerHTML=html;
+}
+
+function selectCust(n,a,t){
+customer.value=n;
+address.value=a;
+customerTax.value=t;
 }
 
 /* PAYMENT */
@@ -239,11 +262,11 @@ function openPayment(){
 paymentModal.style.display="flex";
 }
 
-function chooseCash(){
+function cash(){
 saveBill("เงินสด","รับเงินแล้ว");
 }
 
-function chooseCredit(){
+function credit(){
 creditBox.style.display="block";
 }
 
@@ -254,14 +277,13 @@ saveBill("CREDIT",dueDate.value);
 /* SAVE */
 function saveBill(method,extra){
 
-let total=items.reduce((s,i)=>s+i.total,0);
+let totalVal=items.reduce((s,i)=>s+i.total,0);
 
 let bill={
 id:invoiceNo.innerText,
-type:docPrefix,
 customer:customer.value,
 date:date.value,
-total,
+total:totalVal,
 payment:method,
 note:extra
 };
@@ -280,24 +302,8 @@ paymentModal.style.display="none";
 
 }
 
-/* DASHBOARD */
-let cash=0,credit=0;
-bills.forEach(b=>{
-if(b.payment==="เงินสด") cash+=b.total;
-if(b.payment==="CREDIT") credit+=b.total;
-});
-
-new Chart(paymentChart,{
-type:"pie",
-data:{
-labels:["เงินสด","CREDIT"],
-datasets:[{data:[cash,credit]}]
-}
-});
-
 function showPage(p){
 billPage.style.display=p==="bill"?"block":"none";
-dashboardPage.style.display=p==="dashboard"?"block":"none";
 }
 
 </script>
