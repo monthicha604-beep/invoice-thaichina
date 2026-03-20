@@ -182,142 +182,192 @@ th{background:#f8f8f8}
 
 <script>
 
+<script>
+
 let items=[];
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 let customers=JSON.parse(localStorage.getItem("customers")||"[]");
 let prefix="INV";
 
+/* ===== TYPE ===== */
 function changeType(v){
-prefix=v;
-docType.innerText=v==="INV"?"ใบกำกับภาษี":v==="RC"?"ใบเสร็จ":"ใบสั่งสินค้า";
-generateID(); render();
+  prefix=v;
+
+  docType.innerText =
+  v==="INV"?"ใบกำกับภาษี":
+  v==="RC"?"ใบเสร็จรับเงิน":"ใบสั่งสินค้า";
+
+  generateID();
+  render(); // 👈 สำคัญ
 }
 
+/* ===== GENERATE ID ===== */
 function generateID(){
-let c=localStorage.getItem(prefix)||0;
-c++;
-localStorage.setItem(prefix,c);
-invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
+  let c=localStorage.getItem(prefix)||0;
+  c++;
+  localStorage.setItem(prefix,c);
+  invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
 }
 generateID();
 
+/* ===== PREV ===== */
 function prevInvoice(){
-let c=localStorage.getItem(prefix)||1;
-c--; localStorage.setItem(prefix,c);
-generateID();
+  let c=localStorage.getItem(prefix)||1;
+  c--;
+  if(c<1) c=1;
+  localStorage.setItem(prefix,c);
+  invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
 }
 
-/* ITEM */
+/* ===== ADD ITEM ===== */
 function addItem(){
-let total=(qty.value*price.value)-discount.value;
-items.push({name:name.value,qty:qty.value,dozen:dozen.value,yard:yard.value,price:price.value,discount:discount.value,total});
-render();
+  let total=(qty.value*price.value)-discount.value;
+
+  items.push({
+    name:name.value,
+    qty:qty.value,
+    dozen:dozen.value,
+    yard:yard.value,
+    price:price.value,
+    discount:discount.value,
+    total:total
+  });
+
+  render();
 }
 
+/* ===== RENDER ===== */
 function render(){
-let html="",sum=0;
-items.forEach((i,x)=>{
-html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>${i.dozen}</td><td>${i.yard}</td><td>${i.price}</td><td>${i.discount}</td><td>${i.total}</td></tr>`;
-sum+=i.total;
-});
-table.innerHTML=html;
 
-let vatVal = prefix==="INV" ? sum*0.07 : 0;
-subtotal.innerText=sum.toFixed(2);
+  let html="",subtotalVal=0;
 
-if(prefix==="INV"){
-vatRow.style.display="flex";
-vat.innerText=vatVal.toFixed(2);
-}else{
-vatRow.style.display="none";
+  items.forEach((i,x)=>{
+    html+=`<tr>
+    <td>${x+1}</td>
+    <td>${i.name}</td>
+    <td>${i.qty}</td>
+    <td>${i.dozen}</td>
+    <td>${i.yard}</td>
+    <td>${i.price}</td>
+    <td>${i.discount}</td>
+    <td>${i.total}</td>
+    </tr>`;
+    subtotalVal+=i.total;
+  });
+
+  table.innerHTML=html;
+
+  /* ===== VAT LOGIC ===== */
+  let vatVal = 0;
+  let totalVal = 0;
+
+  if(prefix==="INV"){
+    vatVal = subtotalVal * 0.07;
+    totalVal = subtotalVal + vatVal;
+
+    vatRow.style.display="flex";
+    vat.innerText = vatVal.toFixed(2);
+
+  }else{
+    vatVal = 0;
+    totalVal = subtotalVal;
+
+    vatRow.style.display="none"; // 👈 ซ่อนเลย
+  }
+
+  subtotal.innerText = subtotalVal.toFixed(2);
+  total.innerText = totalVal.toFixed(2);
+
 }
 
-total.innerText=(sum+vatVal).toFixed(2);
+/* ===== PAYMENT ===== */
+function openPayment(){
+  paymentModal.style.display="flex";
 }
 
-/* CUSTOMER */
-function saveCustomer(){
-customers.push({name:customer.value,address:address.value,tax:tax.value});
-localStorage.setItem("customers",JSON.stringify(customers));
-loadTop();
+function cash(){
+  saveBill("เงินสด","รับเงินแล้ว");
 }
 
-function loadTop(){
-let html="";
-customers.slice(-10).forEach((c,i)=>{
-html+=`<div><button onclick="selectCust(${i})">${c.name}</button></div>`;
-});
-topCustomers.innerHTML=html;
-}
-loadTop();
-
-function selectCust(i){
-let c=customers[i];
-customer.value=c.name;
-address.value=c.address;
-tax.value=c.tax;
+function showCredit(){
+  creditBox.style.display="block";
 }
 
-function searchCustomer(){
-let val=customerSearch.value.toLowerCase();
-let html="";
-customers.forEach((c,i)=>{
-if(c.name.toLowerCase().includes(val)){
-html+=`<div onclick="selectCust(${i})">${c.name}</div>`;
-}
-});
-suggestions.innerHTML=html;
+function confirmCredit(){
+  saveBill("CREDIT",due.value);
 }
 
-/* PAYMENT */
-function openPayment(){paymentModal.style.display="flex"}
-function cash(){saveBill("เงินสด","รับเงินแล้ว")}
-function showCredit(){creditBox.style.display="block"}
-function confirmCredit(){saveBill("CREDIT",due.value)}
-
+/* ===== SAVE ===== */
 function saveBill(method,note){
-let sum=items.reduce((s,i)=>s+i.total,0);
-let vatVal = prefix==="INV" ? sum*0.07 : 0;
 
-bills.push({
-id:invoiceNo.innerText,
-customer:customer.value,
-date:date.value,
-total:sum+vatVal,
-payment:method,
-status:"active"
-});
+  let subtotalVal = items.reduce((s,i)=>s+i.total,0);
 
-localStorage.setItem("bills",JSON.stringify(bills));
-alert("บันทึกแล้ว");
-paymentModal.style.display="none";
+  let vatVal = (prefix==="INV") ? subtotalVal*0.07 : 0;
+  let totalVal = subtotalVal + vatVal;
+
+  let bill={
+    id:invoiceNo.innerText,
+    type:prefix,
+    customer:customer.value,
+    date:date.value,
+    subtotal:subtotalVal,
+    vat:vatVal,
+    total:totalVal,
+    payment:method,
+    note:note,
+    status:"active"
+  };
+
+  bills.push(bill);
+  localStorage.setItem("bills",JSON.stringify(bills));
+
+  alert("บันทึกแล้ว");
+  paymentModal.style.display="none";
 }
 
-/* HISTORY */
+/* ===== HISTORY ===== */
 function loadHistory(){
-let html="";
-bills.forEach(b=>{
-html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td><td>${b.status}</td></tr>`;
-});
-historyTable.innerHTML=html;
+  let html="";
+  bills.forEach((b,i)=>{
+    html+=`<tr>
+    <td>${b.id}</td>
+    <td>${b.customer}</td>
+    <td>${b.total}</td>
+    <td>${b.status}</td>
+    </tr>`;
+  });
+  historyTable.innerHTML=html;
 }
 
-/* DASHBOARD */
+/* ===== DASHBOARD ===== */
 function loadChart(){
-let data=bills.map(b=>b.total);
-new Chart(chart,{type:"bar",data:{labels:data,datasets:[{data}]}})
+  let labels=bills.map(b=>b.id);
+  let data=bills.map(b=>b.total);
+
+  new Chart(chart,{
+    type:"bar",
+    data:{
+      labels:labels,
+      datasets:[{
+        label:"ยอดขาย",
+        data:data
+      }]
+    }
+  });
 }
 
-/* PAGE */
+/* ===== PAGE ===== */
 function showPage(p){
-billPage.style.display="none";
-historyPage.style.display="none";
-dashboardPage.style.display="none";
+  billPage.style.display="none";
+  historyPage.style.display="none";
+  dashboardPage.style.display="none";
 
-if(p==="bill") billPage.style.display="block";
-if(p==="history"){historyPage.style.display="block";loadHistory();}
-if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
+  if(p==="bill") billPage.style.display="block";
+  if(p==="history"){historyPage.style.display="block";loadHistory();}
+  if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
 }
+
+</script>
 
 </script>
 
