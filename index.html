@@ -133,6 +133,11 @@ localStorage.setItem("invoiceCount", count);
 let invoiceNumber = "INV-" + String(count).padStart(4, '0');
 document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
 let items = [];
+  function downloadPDF() {
+  const element = document.querySelector(".container");
+
+  html2pdf().from(element).save("invoice.pdf");
+}
 
 function addItem() {
   let name = document.getElementById("name").value;
@@ -173,10 +178,5 @@ function printBill() {
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  function downloadPDF() {
-  const element = document.querySelector(".container");
-
-  html2pdf().from(element).save("invoice.pdf");
-}
 </body>
 </html>
