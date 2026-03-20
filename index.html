@@ -126,6 +126,12 @@ th, td {
 </div>
 
 <script>
+  let count = localStorage.getItem("invoiceCount") || 0;
+count++;
+localStorage.setItem("invoiceCount", count);
+
+let invoiceNumber = "INV-" + String(count).padStart(4, '0');
+document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
 let items = [];
 
 function addItem() {
@@ -169,9 +175,3 @@ function printBill() {
 
 </body>
 </html>
-let count = localStorage.getItem("invoiceCount") || 0;
-count++;
-localStorage.setItem("invoiceCount", count);
-
-let invoiceNumber = "INV-" + String(count).padStart(4, '0');
-document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
