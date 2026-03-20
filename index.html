@@ -147,8 +147,7 @@ let invoiceNumber = "INV-" + String(count).padStart(4, '0');
 document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
 let items = [];
 function downloadPDF() {
- function downloadPDF() {
-  const element = document.querySelector(".container");
+const element = document.querySelector(".container");
 
   let opt = {
     margin: 0,
