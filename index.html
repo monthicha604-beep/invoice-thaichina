@@ -53,10 +53,18 @@ gap:10px;margin-top:30px;text-align:center
 <!-- BILL -->
 <div id="billPage" class="container">
 
-<div style="text-align:center">
-<img src="logo.png" style="width:80px"><br><br>
-<b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-<h2 id="docType">ใบกำกับภาษี</h2>
+<div style="text-align:center; line-height:1.6;">
+  <img src="logo.png" style="width:80px"><br><br>
+
+  <b style="font-size:18px;">ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
+  THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
+  3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน<br>
+  กรุงเทพมหานคร 10150<br>
+  เลขประจำตัวผู้เสียภาษี: 0103566005842
+
+  <h2 id="docType" style="margin-top:15px;">ใบกำกับภาษี</h2>
+</div>
+<h2 id="docType">ใบเสร็จรับเงิน</h2>
 </div>
 
 <select onchange="changeDocType(this.value)">
@@ -75,7 +83,8 @@ gap:10px;margin-top:30px;text-align:center
 <div class="topCustomers" id="topCustomers"></div>
 
 <input id="customer" placeholder="ลูกค้า">
-<input id="address" placeholder="ที่อยู่">
+<input id="address" placeholder="ที่อยู่"> 
+<input id="customerTax" placeholder="เลขประจำตัวผู้เสียภาษี">
 
 <button onclick="saveCustomer()">บันทึกลูกค้า</button>
 
