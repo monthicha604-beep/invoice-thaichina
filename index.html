@@ -7,46 +7,40 @@
 <style>
 body {
   font-family: 'Sarabun', sans-serif;
-  background: #f4f4f4;
+  background: #f5f5f5;
   margin: 0;
 }
 
-.nav {
-  background: black;
-  color: white;
-  padding: 15px;
-  display: flex;
-  gap: 20px;
-}
-
-.nav button {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-}
-
 .container {
-  max-width: 900px;
-  margin: 30px auto;
+  width: 210mm;
+  margin: auto;
   background: white;
-  padding: 30px;
+  padding: 20mm;
 }
 
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.left, .right {
+  width: 48%;
+}
+
+.right {
+  text-align: right;
+}
+
+/* INPUT */
 input, select {
   width: 100%;
-  padding: 8px;
-  margin: 5px 0;
+  padding: 6px;
+  margin: 4px 0;
 }
 
-button.main {
-  background: black;
-  color: white;
-  padding: 10px;
-  border: none;
-  margin-top: 10px;
-}
-
+/* TABLE */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -55,10 +49,15 @@ table {
 
 th, td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 6px;
   text-align: center;
 }
 
+th {
+  background: #f0f0f0;
+}
+
+/* FOOTER */
 .footer {
   display: grid;
   grid-template-columns: repeat(4,1fr);
@@ -71,8 +70,18 @@ th, td {
   margin-top: 30px;
 }
 
+button {
+  padding: 10px;
+  background: black;
+  color: white;
+  border: none;
+  margin-top: 10px;
+}
+
 @media print {
-  button, .nav { display:none; }
+  button, select, input {
+    display: none;
+  }
 }
 </style>
 
@@ -80,54 +89,60 @@ th, td {
 
 <body>
 
-<div class="nav">
-  <button onclick="showPage('bill')">ออกบิล</button>
-  <button onclick="showPage('history')">ประวัติบิล</button>
-</div>
+<div class="container">
 
-<!-- PAGE BILL -->
-<div id="billPage" class="container">
-
+<!-- HEADER COMPANY -->
 <div style="text-align:center;">
   <img src="logo.png" style="width:100px;"><br><br>
-
   <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
   THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
-  <h2 id="billTypeText">ใบกำกับภาษี</h2>
+  <h2>ใบกำกับภาษี / INVOICE</h2>
 </div>
 
-<p id="invoiceNo" style="text-align:right;"></p>
+<!-- CUSTOMER + BILL INFO -->
+<div class="header">
 
-<label>ประเภทบิล</label>
-<select id="billType" onchange="changeType()">
-  <option value="tax">ใบกำกับภาษี</option>
-  <option value="normal">บิลธรรมดา</option>
-</select>
+<div class="left">
+  <label>เลือกลูกค้า</label>
+  <select id="customerSelect" onchange="selectCustomer()"></select>
 
-<label>วันที่</label>
-<input type="date" id="date">
+  <label>ชื่อลูกค้า</label>
+  <input id="customer">
 
-<label>ลูกค้า</label>
-<input id="customer">
+  <label>ที่อยู่</label>
+  <input id="address">
 
-<label>เลขผู้เสียภาษี</label>
-<input id="taxId">
+</div>
 
-<label>ที่อยู่</label>
-<input id="address">
+<div class="right">
+  <p id="invoiceNo"></p>
 
-<h3>สินค้า</h3>
+  <label>วันที่</label>
+  <input type="date" id="date">
+</div>
+
+</div>
+
+<!-- ADD ITEM -->
+<h3>เพิ่มสินค้า</h3>
 
 <input id="name" placeholder="สินค้า">
-<input id="price" type="number" placeholder="ราคา">
 <input id="qty" type="number" placeholder="จำนวน">
+<input id="price" type="number" placeholder="ราคาต่อหน่วย">
+<input id="discount" type="number" placeholder="ส่วนลด">
 
-<button class="main" onclick="addItem()">เพิ่ม</button>
+<button onclick="addItem()">เพิ่มสินค้า</button>
 
+<!-- TABLE -->
 <table>
 <thead>
 <tr>
-<th>สินค้า</th><th>ราคา</th><th>จำนวน</th><th>รวม</th>
+<th>#</th>
+<th>รายการสินค้า</th>
+<th>จำนวน</th>
+<th>ราคาต่อหน่วย</th>
+<th>ส่วนลด</th>
+<th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -135,6 +150,7 @@ th, td {
 
 <h3 id="summary"></h3>
 
+<!-- FOOTER -->
 <div class="footer">
   <div>ผู้อนุมัติ<div class="line"></div></div>
   <div>ผู้รับเงิน<div class="line"></div></div>
@@ -142,129 +158,89 @@ th, td {
   <div>วันที่รับ<div class="line"></div></div>
 </div>
 
-<button class="main" onclick="saveBill()">💾 บันทึกบิล</button>
-<button class="main" onclick="window.print()">📄 PDF</button>
-
-</div>
-
-<!-- PAGE HISTORY -->
-<div id="historyPage" class="container" style="display:none;">
-
-<h2>ประวัติบิล</h2>
-
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th>
-<th>ลูกค้า</th>
-<th>วันที่</th>
-<th>สถานะ</th>
-<th>จัดการ</th>
-</tr>
-</thead>
-<tbody id="historyTable"></tbody>
-
-</table>
+<button onclick="saveCustomer()">💾 บันทึกลูกค้า</button>
+<button onclick="window.print()">📄 PDF</button>
 
 </div>
 
 <script>
-
-let items = [];
-let bills = JSON.parse(localStorage.getItem("bills") || "[]");
 
 // ===== เลขบิล =====
 let count = localStorage.getItem("invoiceCount") || 0;
 count++;
 localStorage.setItem("invoiceCount", count);
 let invoiceNumber = "INV-" + String(count).padStart(4, '0');
-document.getElementById("invoiceNo").innerText = "เลขที่: " + invoiceNumber;
+document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
 
-// ===== เปลี่ยนหน้า =====
-function showPage(page) {
-  document.getElementById("billPage").style.display = page==="bill"?"block":"none";
-  document.getElementById("historyPage").style.display = page==="history"?"block":"none";
-  renderHistory();
+// ===== ลูกค้า =====
+let customers = JSON.parse(localStorage.getItem("customers") || "[]");
+
+function saveCustomer(){
+  let c = {
+    name: document.getElementById("customer").value,
+    address: document.getElementById("address").value
+  };
+  customers.push(c);
+  localStorage.setItem("customers", JSON.stringify(customers));
+  loadCustomers();
 }
 
-// ===== เปลี่ยนประเภทบิล =====
-function changeType(){
-  let val = document.getElementById("billType").value;
-  document.getElementById("billTypeText").innerText =
-    val==="tax" ? "ใบกำกับภาษี" : "บิลธรรมดา";
+function loadCustomers(){
+  let select = document.getElementById("customerSelect");
+  select.innerHTML = "<option>--เลือกลูกค้า--</option>";
+  customers.forEach((c,i)=>{
+    select.innerHTML += `<option value="${i}">${c.name}</option>`;
+  });
 }
 
-// ===== เพิ่มสินค้า =====
+function selectCustomer(){
+  let i = document.getElementById("customerSelect").value;
+  let c = customers[i];
+  if(c){
+    document.getElementById("customer").value = c.name;
+    document.getElementById("address").value = c.address;
+  }
+}
+
+loadCustomers();
+
+// ===== สินค้า =====
+let items = [];
+
 function addItem(){
   let name = document.getElementById("name").value;
-  let price = +document.getElementById("price").value;
   let qty = +document.getElementById("qty").value;
+  let price = +document.getElementById("price").value;
+  let discount = +document.getElementById("discount").value || 0;
 
-  let total = price*qty;
-  items.push({name,price,qty,total});
+  let total = (qty * price) - discount;
+
+  items.push({name,qty,price,discount,total});
   render();
 }
 
-// ===== แสดงสินค้า =====
 function render(){
   let html="", total=0;
 
-  items.forEach(i=>{
-    html+=`<tr>
+  items.forEach((i,index)=>{
+    html += `<tr>
+      <td>${index+1}</td>
       <td>${i.name}</td>
-      <td>${i.price}</td>
       <td>${i.qty}</td>
+      <td>${i.price}</td>
+      <td>${i.discount}</td>
       <td>${i.total}</td>
     </tr>`;
-    total+=i.total;
+    total += i.total;
   });
 
-  document.getElementById("table").innerHTML=html;
+  document.getElementById("table").innerHTML = html;
 
-  let vat = total*0.07;
-  let grand = total+vat;
+  let vat = total * 0.07;
+  let grand = total + vat;
 
   document.getElementById("summary").innerText =
     `รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
-}
-
-// ===== บันทึกบิล =====
-function saveBill(){
-  let bill = {
-    invoice: invoiceNumber,
-    customer: document.getElementById("customer").value,
-    date: document.getElementById("date").value,
-    status: "ใช้งาน"
-  };
-
-  bills.push(bill);
-  localStorage.setItem("bills", JSON.stringify(bills));
-  alert("บันทึกแล้ว");
-}
-
-// ===== แสดงประวัติ =====
-function renderHistory(){
-  let html="";
-  bills.forEach((b,i)=>{
-    html+=`<tr>
-      <td>${b.invoice}</td>
-      <td>${b.customer}</td>
-      <td>${b.date}</td>
-      <td>${b.status}</td>
-      <td>
-        <button onclick="cancelBill(${i})">ยกเลิก</button>
-      </td>
-    </tr>`;
-  });
-
-  document.getElementById("historyTable").innerHTML=html;
-}
-
-// ===== ยกเลิกบิล =====
-function cancelBill(i){
-  bills[i].status="ยกเลิก";
-  localStorage.setItem("bills", JSON.stringify(bills));
-  renderHistory();
 }
 
 </script>
