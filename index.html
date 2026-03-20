@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Thai China ERP FINAL</title>
+<title>Thai China ERP Ultimate FINAL</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,6 +13,7 @@ body{font-family:'Sarabun';background:#eef2f7;margin:0}
 .nav{background:#111;color:#fff;padding:12px;display:flex;gap:10px}
 .nav button{background:none;border:none;color:#fff;cursor:pointer}
 
+/* GOLD FRAME */
 .container{
 width:210mm;
 min-height:297mm;
@@ -22,18 +23,22 @@ padding:12mm;
 border:3px solid gold;
 }
 
+/* HEADER */
 .header{display:flex;justify-content:space-between}
 .left{width:55%}
 .right{text-align:right}
 
 input,select{width:100%;padding:6px;margin:4px 0}
+
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:6px;text-align:center}
 
 .summary{text-align:right;margin-top:10px}
 
-.box{border:1px solid #000;height:50px;margin:5px}
+.footer{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
+.box{border:1px solid #000;height:50px;display:flex;align-items:flex-end;justify-content:center}
 
+/* POPUP */
 .modal{
 display:none;
 position:fixed;
@@ -43,13 +48,9 @@ background:rgba(0,0,0,0.5);
 justify-content:center;
 align-items:center;
 }
+.modal-box{background:#fff;padding:20px;border-radius:10px}
 
-.modal-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-}
-
+/* PRINT */
 @media print{
 .nav,button,input,select{display:none}
 .container{width:210mm;height:297mm}
@@ -68,12 +69,22 @@ border-radius:10px;
 <!-- BILL -->
 <div id="billPage" class="container">
 
-<h2 id="docType">ใบกำกับภาษี</h2>
+<!-- COMPANY -->
+<div style="text-align:center">
+<img src="logo.png" style="width:80px"><br>
+<b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
+THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
+3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพมหานคร 10150<br>
+เลขผู้เสียภาษี: 0103566005842
 
+<h2 id="docType">ใบกำกับภาษี</h2>
+</div>
+
+<!-- TYPE -->
 <select onchange="changeType(this.value)">
-<option value="INV">INV</option>
-<option value="RC">RC</option>
-<option value="PO">PO</option>
+<option value="INV">ใบกำกับภาษี</option>
+<option value="RC">ใบเสร็จรับเงิน</option>
+<option value="PO">ใบสั่งสินค้า</option>
 </select>
 
 <div class="header">
@@ -87,9 +98,9 @@ border-radius:10px;
 
 <input id="customer" placeholder="ลูกค้า">
 <input id="address" placeholder="ที่อยู่">
-<input id="tax" placeholder="เลขประจำตัวผู้เสียภาษี">
+<input id="tax" placeholder="เลขผู้เสียภาษี">
 
-<button onclick="saveCustomer()">บันทึก</button>
+<button onclick="saveCustomer()">บันทึกลูกค้า</button>
 
 </div>
 
@@ -101,8 +112,8 @@ border-radius:10px;
 
 </div>
 
-<!-- ITEM -->
-<input id="name" placeholder="รายการสินค้า">
+<!-- ITEMS -->
+<input id="name" placeholder="สินค้า">
 <input id="qty" placeholder="จำนวน">
 <input id="dozen" placeholder="โหล">
 <input id="yard" placeholder="หลา">
@@ -114,7 +125,7 @@ border-radius:10px;
 <table>
 <thead>
 <tr>
-<th>ลำดับ</th><th>รายการสินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
+<th>#</th><th>สินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -124,6 +135,13 @@ border-radius:10px;
 <p id="subtotal"></p>
 <p id="vat"></p>
 <p id="total"></p>
+</div>
+
+<div class="footer">
+<div class="box">ผู้อนุมัติ</div>
+<div class="box">ผู้รับเงิน</div>
+<div class="box">ผู้รับสินค้า</div>
+<div class="box">วันที่รับ</div>
 </div>
 
 <button onclick="openPayment()">บันทึก</button>
@@ -147,9 +165,7 @@ border-radius:10px;
 
 <!-- HISTORY -->
 <div id="historyPage" class="container" style="display:none">
-
 <h2>ประวัติ</h2>
-
 <input id="search" placeholder="ค้นหา">
 <button onclick="loadHistory()">ค้นหา</button>
 
@@ -159,7 +175,6 @@ border-radius:10px;
 </thead>
 <tbody id="historyTable"></tbody>
 </table>
-
 </div>
 
 <!-- DASHBOARD -->
@@ -174,7 +189,15 @@ let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 let customers=JSON.parse(localStorage.getItem("customers")||"[]");
 let prefix="INV";
 
-/* ID */
+/* TYPE + ID */
+function changeType(v){
+prefix=v;
+docType.innerText =
+v==="INV"?"ใบกำกับภาษี":
+v==="RC"?"ใบเสร็จรับเงิน":"ใบสั่งสินค้า";
+generateID();
+}
+
 function generateID(){
 let c=localStorage.getItem(prefix)||0;
 c++;
@@ -190,15 +213,10 @@ localStorage.setItem(prefix,c);
 generateID();
 }
 
-function changeType(v){
-prefix=v;
-generateID();
-}
-
 /* ITEMS */
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
-items.push({name:name.value,qty,dozen,yard,price,discount,total});
+items.push({name:name.value,qty:qty.value,dozen:dozen.value,yard:yard.value,price:price.value,discount:discount.value,total});
 render();
 }
 
@@ -208,11 +226,11 @@ items.forEach((i,x)=>{
 html+=`<tr>
 <td>${x+1}</td>
 <td>${i.name}</td>
-<td>${i.qty.value}</td>
-<td>${i.dozen.value}</td>
-<td>${i.yard.value}</td>
-<td>${i.price.value}</td>
-<td>${i.discount.value}</td>
+<td>${i.qty}</td>
+<td>${i.dozen}</td>
+<td>${i.yard}</td>
+<td>${i.price}</td>
+<td>${i.discount}</td>
 <td>${i.total}</td>
 </tr>`;
 sum+=i.total;
@@ -221,8 +239,8 @@ table.innerHTML=html;
 
 let vatVal=sum*0.07;
 subtotal.innerText="Subtotal: "+sum;
-vat.innerText="VAT: "+vatVal;
-total.innerText="Total: "+(sum+vatVal);
+vat.innerText="VAT: "+vatVal.toFixed(2);
+total.innerText="Total: "+(sum+vatVal).toFixed(2);
 }
 
 /* CUSTOMER */
@@ -280,6 +298,7 @@ let totalVal=items.reduce((s,i)=>s+i.total,0);
 
 let bill={
 id:invoiceNo.innerText,
+type:prefix,
 customer:customer.value,
 date:date.value,
 total:totalVal,
@@ -290,6 +309,7 @@ status:"active"
 
 bills.push(bill);
 localStorage.setItem("bills",JSON.stringify(bills));
+
 alert("บันทึกแล้ว");
 paymentModal.style.display="none";
 }
