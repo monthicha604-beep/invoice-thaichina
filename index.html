@@ -2,45 +2,58 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>ระบบออกบิล</title>
+<title>ใบกำกับภาษี</title>
 
 <style>
 body {
-  font-family: Arial;
-  background: #f4f4f4;
+  font-family: "Sarabun", sans-serif;
+  background: #f5f5f5;
   padding: 20px;
 }
 .container {
   max-width: 900px;
   margin: auto;
   background: white;
-  padding: 30px;
-  border-radius: 10px;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 h1 {
   text-align: center;
+  letter-spacing: 2px;
 }
 input {
   width: 100%;
   padding: 8px;
-  margin: 5px 0;
+  margin: 6px 0;
+  border: 1px solid #ddd;
 }
 button {
   padding: 10px;
   background: black;
   color: white;
   border: none;
-  cursor: pointer;
 }
 table {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 15px;
   border-collapse: collapse;
 }
 th, td {
   border: 1px solid #ddd;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
+}
+.footer {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 20px;
+  text-align: center;
+}
+.line {
+  border-bottom: 1px solid black;
+  margin-top: 30px;
 }
 </style>
 
@@ -50,18 +63,13 @@ th, td {
 
 <div class="container">
 
-<h1>ใบกำกับภาษี</h1>
+<h1>ใบกำกับภาษี / INVOICE</h1>
 
-<label>ชื่อลูกค้า</label>
-<input id="customer">
+<input id="customer" placeholder="ชื่อลูกค้า">
+<input id="taxId" placeholder="เลขผู้เสียภาษี">
+<input id="address" placeholder="ที่อยู่จัดส่ง">
 
-<label>เลขผู้เสียภาษี</label>
-<input id="taxId">
-
-<label>ที่อยู่จัดส่ง</label>
-<input id="address">
-
-<h3>เพิ่มสินค้า</h3>
+<h3>รายการสินค้า</h3>
 
 <input id="name" placeholder="สินค้า">
 <input id="price" type="number" placeholder="ราคา">
@@ -83,14 +91,31 @@ th, td {
 
 <h3 id="summary"></h3>
 
-<br>
+<div class="footer">
+  <div>
+    ผู้อนุมัติ
+    <div class="line"></div>
+  </div>
+  <div>
+    ผู้รับเงิน
+    <div class="line"></div>
+  </div>
+  <div>
+    ผู้รับสินค้า
+    <div class="line"></div>
+  </div>
+  <div>
+    วันที่รับ
+    <div class="line"></div>
+  </div>
+</div>
 
-<button onclick="printBill()">🧾 ออกบิล / พิมพ์</button>
+<br>
+<button onclick="printBill()">🧾 พิมพ์ / PDF</button>
 
 </div>
 
 <script>
-
 let items = [];
 
 function addItem() {
@@ -101,7 +126,6 @@ function addItem() {
   let total = price * qty;
 
   items.push({name, price, qty, total});
-
   render();
 }
 
@@ -125,13 +149,12 @@ function render() {
   let grand = total + vat;
 
   document.getElementById("summary").innerHTML =
-    `รวม: ${total.toFixed(2)} | VAT: ${vat.toFixed(2)} | สุทธิ: ${grand.toFixed(2)}`;
+    `รวม: ${total.toFixed(2)} | VAT 7%: ${vat.toFixed(2)} | สุทธิ: ${grand.toFixed(2)}`;
 }
 
 function printBill() {
   window.print();
 }
-
 </script>
 
 </body>
