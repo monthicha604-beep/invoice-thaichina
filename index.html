@@ -4,85 +4,12 @@
 <meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
 <style>
-body {
-  font-family: 'Sarabun', sans-serif;
-  background: #f5f5f5;
-  margin: 0;
-}
-
-.container {
-  width: 210mm;
-  margin: auto;
-  background: white;
-  padding: 20mm;
-}
-
-/* HEADER */
-.header {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.left, .right {
-  width: 48%;
-}
-
-.right {
-  text-align: right;
-}
-
-/* INPUT */
-input, select {
-  width: 100%;
-  padding: 6px;
-  margin: 4px 0;
-}
-
-/* TABLE */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
-}
-
-th {
-  background: #f0f0f0;
-}
-
-/* FOOTER */
-.footer {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  margin-top: 40px;
-  text-align: center;
-}
-
-.line {
-  border-bottom: 1px solid black;
-  margin-top: 30px;
-}
-
-button {
-  padding: 10px;
-  background: black;
-  color: white;
-  border: none;
-  margin-top: 10px;
-}
-
-@media print {
-  button, select, input {
-    display: none;
-  }
-}
+body { font-family:'Sarabun'; background:#f5f5f5; }
+.container { max-width:900px; margin:auto; background:white; padding:20px; }
 </style>
 
 </head>
@@ -91,157 +18,103 @@ button {
 
 <div class="container">
 
-<!-- HEADER COMPANY -->
-<div style="text-align:center;">
-  <img src="logo.png" style="width:100px;"><br><br>
-  <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-  THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
-  <h2>ใบกำกับภาษี / INVOICE</h2>
-</div>
+<h2>ระบบออกบิล</h2>
 
-<!-- CUSTOMER + BILL INFO -->
-<div class="header">
-
-<div class="left">
-  <label>เลือกลูกค้า</label>
-  <select id="customerSelect" onchange="selectCustomer()"></select>
-
-  <label>ชื่อลูกค้า</label>
-  <input id="customer">
-
-  <label>ที่อยู่</label>
-  <input id="address">
-
-</div>
-
-<div class="right">
-  <p id="invoiceNo"></p>
-
-  <label>วันที่</label>
-  <input type="date" id="date">
-</div>
-
-</div>
-
-<!-- ADD ITEM -->
-<h3>เพิ่มสินค้า</h3>
+<input id="customer" placeholder="ลูกค้า">
+<input id="date" type="date">
 
 <input id="name" placeholder="สินค้า">
-<input id="qty" type="number" placeholder="จำนวน">
-<input id="price" type="number" placeholder="ราคาต่อหน่วย">
-<input id="discount" type="number" placeholder="ส่วนลด">
+<input id="price" placeholder="ราคา">
+<input id="qty" placeholder="จำนวน">
 
-<button onclick="addItem()">เพิ่มสินค้า</button>
+<button onclick="addItem()">เพิ่ม</button>
 
-<!-- TABLE -->
-<table>
-<thead>
-<tr>
-<th>#</th>
-<th>รายการสินค้า</th>
-<th>จำนวน</th>
-<th>ราคาต่อหน่วย</th>
-<th>ส่วนลด</th>
-<th>รวม</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
-</table>
+<table id="table"></table>
 
-<h3 id="summary"></h3>
+<h3 id="total"></h3>
 
-<!-- FOOTER -->
-<div class="footer">
-  <div>ผู้อนุมัติ<div class="line"></div></div>
-  <div>ผู้รับเงิน<div class="line"></div></div>
-  <div>ผู้รับสินค้า<div class="line"></div></div>
-  <div>วันที่รับ<div class="line"></div></div>
-</div>
+<button onclick="saveBill()">💾 บันทึกบิล</button>
 
-<button onclick="saveCustomer()">💾 บันทึกลูกค้า</button>
-<button onclick="window.print()">📄 PDF</button>
+<hr>
+
+<h2>📊 Dashboard</h2>
+<p id="summary"></p>
+
+<h2>📄 ประวัติ</h2>
+<div id="history"></div>
 
 </div>
 
 <script>
 
-// ===== เลขบิล =====
-let count = localStorage.getItem("invoiceCount") || 0;
-count++;
-localStorage.setItem("invoiceCount", count);
-let invoiceNumber = "INV-" + String(count).padStart(4, '0');
-document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
+// 🔥 ใส่ config คุณตรงนี้
+const firebaseConfig = {
+  apiKey: "ใส่ของคุณ",
+  authDomain: "ใส่ของคุณ",
+  projectId: "ใส่ของคุณ"
+};
 
-// ===== ลูกค้า =====
-let customers = JSON.parse(localStorage.getItem("customers") || "[]");
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-function saveCustomer(){
-  let c = {
-    name: document.getElementById("customer").value,
-    address: document.getElementById("address").value
-  };
-  customers.push(c);
-  localStorage.setItem("customers", JSON.stringify(customers));
-  loadCustomers();
-}
-
-function loadCustomers(){
-  let select = document.getElementById("customerSelect");
-  select.innerHTML = "<option>--เลือกลูกค้า--</option>";
-  customers.forEach((c,i)=>{
-    select.innerHTML += `<option value="${i}">${c.name}</option>`;
-  });
-}
-
-function selectCustomer(){
-  let i = document.getElementById("customerSelect").value;
-  let c = customers[i];
-  if(c){
-    document.getElementById("customer").value = c.name;
-    document.getElementById("address").value = c.address;
-  }
-}
-
-loadCustomers();
-
-// ===== สินค้า =====
 let items = [];
 
 function addItem(){
   let name = document.getElementById("name").value;
-  let qty = +document.getElementById("qty").value;
   let price = +document.getElementById("price").value;
-  let discount = +document.getElementById("discount").value || 0;
+  let qty = +document.getElementById("qty").value;
 
-  let total = (qty * price) - discount;
-
-  items.push({name,qty,price,discount,total});
+  items.push({name,price,qty});
   render();
 }
 
 function render(){
   let html="", total=0;
 
-  items.forEach((i,index)=>{
-    html += `<tr>
-      <td>${index+1}</td>
-      <td>${i.name}</td>
-      <td>${i.qty}</td>
-      <td>${i.price}</td>
-      <td>${i.discount}</td>
-      <td>${i.total}</td>
-    </tr>`;
-    total += i.total;
+  items.forEach(i=>{
+    let t=i.price*i.qty;
+    total+=t;
+    html+=`<tr><td>${i.name}</td><td>${t}</td></tr>`;
   });
 
-  document.getElementById("table").innerHTML = html;
-
-  let vat = total * 0.07;
-  let grand = total + vat;
-
-  document.getElementById("summary").innerText =
-    `รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
+  document.getElementById("table").innerHTML=html;
+  document.getElementById("total").innerText="รวม: "+total;
 }
+
+async function saveBill(){
+  let total = items.reduce((s,i)=>s+i.price*i.qty,0);
+
+  await db.collection("bills").add({
+    customer: document.getElementById("customer").value,
+    date: document.getElementById("date").value,
+    total,
+    items
+  });
+
+  alert("บันทึกแล้ว");
+  loadData();
+}
+
+async function loadData(){
+  let snap = await db.collection("bills").get();
+
+  let total=0;
+  let html="";
+
+  snap.forEach(doc=>{
+    let d=doc.data();
+    total+=d.total;
+
+    html+=`<div>
+      ${d.date} - ${d.customer} - ${d.total}
+    </div>`;
+  });
+
+  document.getElementById("summary").innerText="ยอดรวมทั้งหมด: "+total;
+  document.getElementById("history").innerHTML=html;
+}
+
+loadData();
 
 </script>
 
