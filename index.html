@@ -50,7 +50,6 @@ body{background:#fff}
 <button onclick="showPage('bill')">ออกบิล</button>
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('dashboard')">Dashboard</button>
-<button onclick="showPage('calculator')">เครื่องคิดเลข</button>
 </div>
 
 <!-- BILL -->
@@ -108,6 +107,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </table>
 
 <h3 id="summary"></h3>
+<h4 id="thaiText"></h4>
 
 <div class="footer">
 <div>ผู้อนุมัติ<div class="line"></div></div>
@@ -123,6 +123,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <!-- HISTORY -->
 <div id="historyPage" class="container" style="display:none">
+
 <h2>ค้นหาบิล</h2>
 
 <input id="searchText" placeholder="เลขบิล/ลูกค้า">
@@ -146,14 +147,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <div id="dashboardPage" class="container" style="display:none">
 <h2>Dashboard</h2>
 <canvas id="chart"></canvas>
-</div>
-
-<!-- CALCULATOR -->
-<div id="calculatorPage" class="container" style="display:none">
-<h2>เครื่องคิดเลข</h2>
-<input id="calcInput">
-<button onclick="calculate()">=</button>
-<h3 id="calcResult"></h3>
 </div>
 
 <script>
@@ -211,7 +204,7 @@ render();
 }
 
 function render(){
-let html="",total=0;
+let html="",subtotal=0;
 items.forEach((i,x)=>{
 html+=`<tr>
 <td>${x+1}</td>
@@ -221,55 +214,52 @@ html+=`<tr>
 <td>${i.discount}</td>
 <td>${i.total}</td>
 </tr>`;
-total+=i.total;
+subtotal+=i.total;
 });
 
 table.innerHTML=html;
-let vat=total*0.07;
-let grand=total+vat;
-summary.innerText=`รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
+
+let vat=subtotal*0.07;
+let grand=subtotal+vat;
+
+summary.innerText=`รวม ${subtotal} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
+thaiText.innerText=grand.toLocaleString("th-TH")+" บาทถ้วน";
 }
 
-// ===== saveBill (แก้ให้แล้ว) =====
+// ===== SAVE =====
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 
 function saveBill(){
 
-let total=items.reduce((s,i)=>s+i.total,0);
-let vat=total*0.07;
-let grand=total+vat;
+let subtotal=items.reduce((s,i)=>s+i.total,0);
+let vat=subtotal*0.07;
+let grand=subtotal+vat;
 
-let bill={
-invoice:invoiceNumber,
-customer:customer.value,
-date:date.value,
-grand
-};
+let bill={invoice:invoiceNumber,customer:customer.value,date:date.value,grand};
 
 bills.push(bill);
 localStorage.setItem("bills",JSON.stringify(bills));
 
-// 🔥 ส่งออนไลน์ (แก้แล้ว)
 fetch(API_URL,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify(bill)
 })
-.then(()=>alert("บันทึกออนไลน์แล้ว ✅"))
-.catch(()=>alert("ส่งข้อมูลไม่สำเร็จ ❌"));
+.then(()=>alert("บันทึกออนไลน์แล้ว"))
+.catch(()=>alert("ผิดพลาด"));
 
 }
 
-// ===== search =====
+// ===== SEARCH =====
 function searchBill(){
-let text=searchText.value.toLowerCase();
+let t=searchText.value.toLowerCase();
 let d=filterDate.value;
 let m=filterMonth.value;
 
 let f=bills.filter(b=>
-(!text || b.invoice.toLowerCase().includes(text) || b.customer.toLowerCase().includes(text)) &&
-(!d || b.date===d) &&
-(!m || b.date.startsWith(m))
+(!t||b.invoice.toLowerCase().includes(t)||b.customer.toLowerCase().includes(t)) &&
+(!d||b.date===d) &&
+(!m||b.date.startsWith(m))
 );
 
 renderHistory(f);
@@ -282,23 +272,19 @@ html+=`<tr><td>${b.invoice}</td><td>${b.customer}</td><td>${b.date}</td><td>${b.
 });
 historyTable.innerHTML=html;
 }
-
 renderHistory(bills);
 
-// ===== dashboard =====
+// ===== DASHBOARD =====
 let ctx=document.getElementById("chart");
 new Chart(ctx,{
 type:"bar",
 data:{
 labels:bills.map(b=>b.date),
-datasets:[{
-label:"ยอดขาย",
-data:bills.map(b=>b.grand)
-}]
+datasets:[{label:"ยอดขาย",data:bills.map(b=>b.grand)}]
 }
 });
 
-// ===== export =====
+// ===== EXPORT =====
 function exportCSV(){
 let csv="invoice,customer,date,total\n";
 bills.forEach(b=>{
@@ -311,17 +297,11 @@ a.download="report.csv";
 a.click();
 }
 
-// ===== calculator =====
-function calculate(){
-calcResult.innerText=eval(calcInput.value);
-}
-
-// ===== page =====
+// ===== PAGE =====
 function showPage(p){
 billPage.style.display=p==="bill"?"block":"none";
 historyPage.style.display=p==="history"?"block":"none";
 dashboardPage.style.display=p==="dashboard"?"block":"none";
-calculatorPage.style.display=p==="calculator"?"block":"none";
 }
 
 function changeDocType(v){
