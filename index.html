@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ระบบออกบิล</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f4f4f4;
+  padding: 20px;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+}
+h1 {
+  text-align: center;
+}
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+}
+button {
+  padding: 10px;
+  background: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>ใบกำกับภาษี</h1>
+
+<label>ชื่อลูกค้า</label>
+<input id="customer">
+
+<label>เลขผู้เสียภาษี</label>
+<input id="taxId">
+
+<label>ที่อยู่จัดส่ง</label>
+<input id="address">
+
+<h3>เพิ่มสินค้า</h3>
+
+<input id="name" placeholder="สินค้า">
+<input id="price" type="number" placeholder="ราคา">
+<input id="qty" type="number" placeholder="จำนวน">
+
+<button onclick="addItem()">เพิ่มรายการ</button>
+
+<table>
+<thead>
+<tr>
+<th>สินค้า</th>
+<th>ราคา</th>
+<th>จำนวน</th>
+<th>รวม</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+<h3 id="summary"></h3>
+
+<br>
+
+<button onclick="printBill()">🧾 ออกบิล / พิมพ์</button>
+
+</div>
+
+<script>
+
+let items = [];
+
+function addItem() {
+  let name = document.getElementById("name").value;
+  let price = document.getElementById("price").value;
+  let qty = document.getElementById("qty").value;
+
+  let total = price * qty;
+
+  items.push({name, price, qty, total});
+
+  render();
+}
+
+function render() {
+  let html = "";
+  let total = 0;
+
+  items.forEach(i => {
+    html += `<tr>
+      <td>${i.name}</td>
+      <td>${i.price}</td>
+      <td>${i.qty}</td>
+      <td>${i.total}</td>
+    </tr>`;
+    total += i.total;
+  });
+
+  document.getElementById("table").innerHTML = html;
+
+  let vat = total * 0.07;
+  let grand = total + vat;
+
+  document.getElementById("summary").innerHTML =
+    `รวม: ${total.toFixed(2)} | VAT: ${vat.toFixed(2)} | สุทธิ: ${grand.toFixed(2)}`;
+}
+
+function printBill() {
+  window.print();
+}
+
+</script>
+
+</body>
+</html>
