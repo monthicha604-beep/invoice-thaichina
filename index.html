@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Thai China ERP Premium</title>
+<title>Thai China ERP Ultimate</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,7 +13,6 @@ body{font-family:'Sarabun';background:#eef2f7;margin:0}
 .nav{background:#111;color:#fff;padding:12px;display:flex;gap:10px}
 .nav button{background:none;border:none;color:#fff;cursor:pointer}
 
-/* GOLD */
 .container{
 width:210mm;
 min-height:297mm;
@@ -23,44 +22,26 @@ padding:18mm;
 border:2px solid #d4af37;
 }
 
-/* HEADER */
-.company-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-border-bottom:2px solid #d4af37;
-padding-bottom:10px;
-}
-
-.company-left{display:flex;gap:10px;align-items:center}
-.company-left img{width:70px}
-
-.company-title{font-weight:bold;font-size:18px}
-.doc-title{font-size:20px;font-weight:bold}
-
-/* SECTION */
 .header{display:flex;justify-content:space-between;margin-top:15px}
-.box{border:1px solid #ddd;padding:10px;border-radius:6px}
+.box{border:1px solid #ddd;padding:10px;border-radius:6px;width:48%}
 
-/* TABLE */
 table{width:100%;border-collapse:collapse;margin-top:15px}
 th,td{border:1px solid #ddd;padding:8px;text-align:center}
 th{background:#f8f8f8}
 
-/* SUMMARY */
-.summary{width:260px;margin-left:auto;margin-top:15px;border:1px solid #ddd;padding:10px}
-.summary p{display:flex;justify-content:space-between;margin:4px}
-.total-final{font-weight:bold;border-top:1px solid #000}
+.summary{width:260px;margin-left:auto;margin-top:10px;border:1px solid #ddd;padding:10px}
+.summary p{display:flex;justify-content:space-between}
+.total{font-weight:bold;border-top:1px solid #000}
 
-/* FOOTER */
-.footer{display:grid;grid-template-columns:repeat(4,1fr);margin-top:40px;gap:10px}
-.line{border-bottom:1px solid #000;margin-top:40px}
-
-/* MODAL */
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center}
+.modal{
+display:none;
+position:fixed;
+top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+justify-content:center;align-items:center;
+}
 .modal-box{background:#fff;padding:20px;border-radius:10px}
 
-/* PRINT */
 @media print{
 .nav,button,input,select{display:none}
 .container{width:210mm;height:297mm}
@@ -79,77 +60,44 @@ th{background:#f8f8f8}
 <!-- BILL -->
 <div id="billPage" class="container">
 
-<div class="company-header">
-<div class="company-left">
-<img src="logo.png">
-<div>
-<div class="company-title">ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</div>
-3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน<br>
-เลขผู้เสียภาษี: 0103566005842
-</div>
-</div>
-<div class="doc-title" id="docType">ใบกำกับภาษี</div>
-</div>
+<h2 id="docType">ใบกำกับภาษี</h2>
 
 <select onchange="changeType(this.value)">
-<option value="INV">ใบกำกับภาษี</option>
-<option value="RC">ใบเสร็จ</option>
-<option value="PO">ใบสั่งสินค้า</option>
+<option value="INV">INV</option>
+<option value="RC">RC</option>
+<option value="PO">PO</option>
 </select>
 
 <div class="header">
-<div class="box" style="width:55%">
-ลูกค้า<br>
-<input id="customerSearch" placeholder="ค้นหา" oninput="searchCustomer()">
-<div id="suggestions"></div>
-<div id="topCustomers"></div>
-<input id="customer">
-<input id="address">
-<input id="tax">
-<button onclick="saveCustomer()">บันทึก</button>
+<div class="box">
+<input id="customer" placeholder="ลูกค้า">
 </div>
 
-<div class="box" style="width:40%">
+<div class="box">
 เลขที่: <span id="invoiceNo"></span><br>
-วันที่: <input type="date" id="date">
-<button onclick="prevInvoice()">ย้อนเลข</button>
+วันที่: <input type="date" id="date"><br>
+
+<button onclick="prevBill()">◀️ ก่อนหน้า</button>
+<button onclick="nextBill()">ถัดไป ▶️</button>
+
 </div>
 </div>
 
-<!-- ITEMS -->
-<input id="name" placeholder="สินค้า">
-<input id="qty" placeholder="จำนวน">
-<input id="dozen" placeholder="โหล">
-<input id="yard" placeholder="หลา">
 <input id="price" placeholder="ราคา">
-<input id="discount" placeholder="ส่วนลด">
-
-<button onclick="addItem()">เพิ่มสินค้า</button>
+<button onclick="addItem()">เพิ่ม</button>
 
 <table>
-<thead>
-<tr>
-<th>#</th><th>สินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
-</tr>
-</thead>
+<thead><tr><th>#</th><th>ราคา</th></tr></thead>
 <tbody id="table"></tbody>
 </table>
 
 <div class="summary">
-<p><span>ก่อน VAT</span><span id="subtotal"></span></p>
+<p><span>Subtotal</span><span id="subtotal"></span></p>
 <p id="vatRow"><span>VAT</span><span id="vat"></span></p>
-<p class="total-final"><span>สุทธิ</span><span id="total"></span></p>
-</div>
-
-<div class="footer">
-<div>ผู้อนุมัติ<div class="line"></div></div>
-<div>ผู้รับเงิน<div class="line"></div></div>
-<div>ผู้รับสินค้า<div class="line"></div></div>
-<div>วันที่รับ<div class="line"></div></div>
+<p class="total"><span>Total</span><span id="total"></span></p>
 </div>
 
 <button onclick="openPayment()">บันทึก</button>
-<button onclick="window.print()">PDF</button>
 
 </div>
 
@@ -157,20 +105,13 @@ th{background:#f8f8f8}
 <div id="paymentModal" class="modal">
 <div class="modal-box">
 <button onclick="cash()">เงินสด</button>
-<button onclick="showCredit()">CREDIT</button>
-<div id="creditBox" style="display:none">
-<input type="date" id="due">
-<button onclick="confirmCredit()">ยืนยัน</button>
-</div>
+<button onclick="credit()">CREDIT</button>
 </div>
 </div>
 
 <!-- HISTORY -->
 <div id="historyPage" class="container" style="display:none">
-<input id="search" placeholder="ค้นหา">
-<button onclick="loadHistory()">ค้นหา</button>
 <table>
-<thead><tr><th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>สถานะ</th></tr></thead>
 <tbody id="historyTable"></tbody>
 </table>
 </div>
@@ -182,192 +123,118 @@ th{background:#f8f8f8}
 
 <script>
 
-<script>
-
 let items=[];
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
-let customers=JSON.parse(localStorage.getItem("customers")||"[]");
+let currentIndex=-1;
 let prefix="INV";
 
-/* ===== TYPE ===== */
-function changeType(v){
-  prefix=v;
-
-  docType.innerText =
-  v==="INV"?"ใบกำกับภาษี":
-  v==="RC"?"ใบเสร็จรับเงิน":"ใบสั่งสินค้า";
-
-  generateID();
-  render(); // 👈 สำคัญ
-}
-
-/* ===== GENERATE ID ===== */
+/* ID */
 function generateID(){
-  let c=localStorage.getItem(prefix)||0;
-  c++;
-  localStorage.setItem(prefix,c);
-  invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
-}
-generateID();
-
-/* ===== PREV ===== */
-function prevInvoice(){
-  let c=localStorage.getItem(prefix)||1;
-  c--;
-  if(c<1) c=1;
-  localStorage.setItem(prefix,c);
-  invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
+let c=localStorage.getItem(prefix)||0;
+c++;
+localStorage.setItem(prefix,c);
+return prefix+"-"+String(c).padStart(4,'0');
 }
 
-/* ===== ADD ITEM ===== */
+/* TYPE */
+function changeType(v){
+prefix=v;
+invoiceNo.innerText=generateID();
+render();
+}
+
+/* ITEM */
 function addItem(){
-  let total=(qty.value*price.value)-discount.value;
-
-  items.push({
-    name:name.value,
-    qty:qty.value,
-    dozen:dozen.value,
-    yard:yard.value,
-    price:price.value,
-    discount:discount.value,
-    total:total
-  });
-
-  render();
+items.push(Number(price.value));
+render();
 }
 
-/* ===== RENDER ===== */
 function render(){
+let html="",sum=0;
+items.forEach((i,x)=>{
+html+=`<tr><td>${x+1}</td><td>${i}</td></tr>`;
+sum+=i;
+});
+table.innerHTML=html;
 
-  let html="",subtotalVal=0;
+let vatVal = prefix==="INV"?sum*0.07:0;
+subtotal.innerText=sum;
 
-  items.forEach((i,x)=>{
-    html+=`<tr>
-    <td>${x+1}</td>
-    <td>${i.name}</td>
-    <td>${i.qty}</td>
-    <td>${i.dozen}</td>
-    <td>${i.yard}</td>
-    <td>${i.price}</td>
-    <td>${i.discount}</td>
-    <td>${i.total}</td>
-    </tr>`;
-    subtotalVal+=i.total;
-  });
-
-  table.innerHTML=html;
-
-  /* ===== VAT LOGIC ===== */
-  let vatVal = 0;
-  let totalVal = 0;
-
-  if(prefix==="INV"){
-    vatVal = subtotalVal * 0.07;
-    totalVal = subtotalVal + vatVal;
-
-    vatRow.style.display="flex";
-    vat.innerText = vatVal.toFixed(2);
-
-  }else{
-    vatVal = 0;
-    totalVal = subtotalVal;
-
-    vatRow.style.display="none"; // 👈 ซ่อนเลย
-  }
-
-  subtotal.innerText = subtotalVal.toFixed(2);
-  total.innerText = totalVal.toFixed(2);
-
+if(prefix==="INV"){
+vatRow.style.display="block";
+vat.innerText=vatVal.toFixed(2);
+}else{
+vatRow.style.display="none";
 }
 
-/* ===== PAYMENT ===== */
+total.innerText=(sum+vatVal).toFixed(2);
+}
+
+/* PAYMENT */
 function openPayment(){
-  paymentModal.style.display="flex";
+paymentModal.style.display="flex";
 }
 
 function cash(){
-  saveBill("เงินสด","รับเงินแล้ว");
+saveBill("เงินสด");
 }
 
-function showCredit(){
-  creditBox.style.display="block";
+function credit(){
+saveBill("CREDIT");
 }
 
-function confirmCredit(){
-  saveBill("CREDIT",due.value);
+function saveBill(method){
+
+let sum=items.reduce((a,b)=>a+b,0);
+let vatVal = prefix==="INV"?sum*0.07:0;
+
+let bill={
+id:invoiceNo.innerText,
+customer:customer.value,
+total:sum+vatVal
+};
+
+bills.push(bill);
+currentIndex=bills.length-1;
+
+localStorage.setItem("bills",JSON.stringify(bills));
+
+alert("บันทึกแล้ว");
+paymentModal.style.display="none";
 }
 
-/* ===== SAVE ===== */
-function saveBill(method,note){
-
-  let subtotalVal = items.reduce((s,i)=>s+i.total,0);
-
-  let vatVal = (prefix==="INV") ? subtotalVal*0.07 : 0;
-  let totalVal = subtotalVal + vatVal;
-
-  let bill={
-    id:invoiceNo.innerText,
-    type:prefix,
-    customer:customer.value,
-    date:date.value,
-    subtotal:subtotalVal,
-    vat:vatVal,
-    total:totalVal,
-    payment:method,
-    note:note,
-    status:"active"
-  };
-
-  bills.push(bill);
-  localStorage.setItem("bills",JSON.stringify(bills));
-
-  alert("บันทึกแล้ว");
-  paymentModal.style.display="none";
+/* NAVIGATION */
+function prevBill(){
+if(currentIndex>0){
+currentIndex--;
+loadBill();
+}
 }
 
-/* ===== HISTORY ===== */
-function loadHistory(){
-  let html="";
-  bills.forEach((b,i)=>{
-    html+=`<tr>
-    <td>${b.id}</td>
-    <td>${b.customer}</td>
-    <td>${b.total}</td>
-    <td>${b.status}</td>
-    </tr>`;
-  });
-  historyTable.innerHTML=html;
+function nextBill(){
+items=[];
+customer.value="";
+invoiceNo.innerText=generateID();
+render();
 }
 
-/* ===== DASHBOARD ===== */
-function loadChart(){
-  let labels=bills.map(b=>b.id);
-  let data=bills.map(b=>b.total);
-
-  new Chart(chart,{
-    type:"bar",
-    data:{
-      labels:labels,
-      datasets:[{
-        label:"ยอดขาย",
-        data:data
-      }]
-    }
-  });
+/* LOAD */
+function loadBill(){
+let b=bills[currentIndex];
+customer.value=b.customer;
+invoiceNo.innerText=b.id;
 }
 
-/* ===== PAGE ===== */
+/* PAGE */
 function showPage(p){
-  billPage.style.display="none";
-  historyPage.style.display="none";
-  dashboardPage.style.display="none";
+billPage.style.display="none";
+historyPage.style.display="none";
+dashboardPage.style.display="none";
 
-  if(p==="bill") billPage.style.display="block";
-  if(p==="history"){historyPage.style.display="block";loadHistory();}
-  if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
+if(p==="bill") billPage.style.display="block";
 }
 
-</script>
+invoiceNo.innerText=generateID();
 
 </script>
 
