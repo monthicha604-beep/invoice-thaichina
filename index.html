@@ -2,107 +2,42 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Thai China Invoice Pro</title>
+<title>Invoice ERP Pro</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-  font-family:'Sarabun';
-  background:#eef2f7;
-  margin:0;
-}
+body{font-family:'Sarabun';background:#eef2f7;margin:0}
+.nav{background:#0f172a;color:#fff;padding:12px;display:flex;gap:10px}
+.nav button{background:none;border:none;color:#fff;cursor:pointer}
 
-/* NAV */
-.nav{
-  background:#0f172a;
-  color:#fff;
-  padding:12px;
-  display:flex;
-  gap:10px;
-}
-.nav button{
-  background:none;
-  border:none;
-  color:#fff;
-  cursor:pointer;
-}
-
-/* A4 */
 .container{
-  width:210mm;
-  min-height:297mm;
-  margin:20px auto;
-  background:#fff;
-  padding:15mm;
-  box-shadow:0 8px 25px rgba(0,0,0,0.1);
+width:210mm;min-height:297mm;margin:20px auto;
+background:#fff;padding:15mm;box-shadow:0 8px 25px rgba(0,0,0,0.1)
 }
 
-/* HEADER */
-.header{
-  display:flex;
-  justify-content:space-between;
-  margin-top:15px;
-}
-
+.header{display:flex;justify-content:space-between;margin-top:15px}
 .left,.right{width:48%}
 .right{text-align:right}
 
-/* INPUT */
-input,select{
-  width:100%;
-  padding:6px;
-  margin:4px 0;
-  border:1px solid #ddd;
-}
+input,select{width:100%;padding:6px;margin:4px 0;border:1px solid #ddd}
 
-/* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-}
-th,td{
-  border:1px solid #ddd;
-  padding:6px;
-  text-align:center;
-}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
 th{background:#f1f5f9}
 
-/* FOOTER */
 .footer{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-top:30px;
-  text-align:center;
+display:grid;grid-template-columns:repeat(4,1fr);
+gap:10px;margin-top:30px;text-align:center
 }
-.box{
-  border:1px solid #000;
-  height:70px;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-}
+.box{border:1px solid #000;height:70px;display:flex;align-items:flex-end;justify-content:center}
 
-/* PRINT FIX */
+.topCustomers button{margin:3px}
+
 @media print{
-  body{background:#fff}
-  .nav,button,input,select{display:none}
-  .container{
-    width:210mm;
-    height:297mm;
-    box-shadow:none;
-  }
-}
-
-button{
-  background:#0f172a;
-  color:#fff;
-  padding:6px;
-  border:none;
-  margin-top:5px;
+.nav,button,input,select{display:none}
+.container{width:210mm;height:297mm;box-shadow:none}
 }
 </style>
 </head>
@@ -121,31 +56,44 @@ button{
 <div style="text-align:center">
 <img src="logo.png" style="width:80px"><br><br>
 <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
-3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพมหานคร<br>
-เลขผู้เสียภาษี: 0103566005842
 <h2 id="docType">ใบกำกับภาษี</h2>
 </div>
 
+<select onchange="changeDocType(this.value)">
+<option value="INV">ใบกำกับภาษี</option>
+<option value="RC">ใบเสร็จรับเงิน</option>
+<option value="PO">ใบสั่งสินค้า</option>
+</select>
+
 <div class="header">
+
 <div class="left">
+
+<input id="customerSearch" placeholder="ค้นหาลูกค้า" oninput="searchCustomer()">
+<div id="suggestions"></div>
+
+<div class="topCustomers" id="topCustomers"></div>
+
 <input id="customer" placeholder="ลูกค้า">
-<input id="address" placeholder="ที่อยู่ลูกค้า">
+<input id="address" placeholder="ที่อยู่">
+
+<button onclick="saveCustomer()">บันทึกลูกค้า</button>
+
 </div>
 
 <div class="right">
 <p id="invoiceNo"></p>
 <input type="date" id="date">
 </div>
+
 </div>
 
-<h3>รายการสินค้า</h3>
-
-<input id="name" placeholder="สินค้า">
-<input id="qty" type="number" placeholder="ลำดับ">
-<input id="dozen" type="number" placeholder="จำนวนโหล">
-<input id="yard" type="number" placeholder="จำนวนหลา">
-<input id="price" type="number" placeholder="ราคาต่อหน่วย">
+<!-- ITEMS -->
+<input id="name" placeholder="รายการสินค้า">
+<input id="qty" type="number" placeholder="จำนวน">
+<input id="dozen" type="number" placeholder="โหล">
+<input id="yard" type="number" placeholder="หลา">
+<input id="price" type="number" placeholder="ราคา">
 <input id="discount" type="number" placeholder="ส่วนลด">
 
 <button onclick="addItem()">เพิ่มสินค้า</button>
@@ -153,21 +101,13 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>สินค้า</th>
-<th>ลำดับ</th>
-<th>โหล</th>
-<th>หลา</th>
-<th>ราคา</th>
-<th>ส่วนลด</th>
-<th>รวม</th>
+<th>ลำดับ</th><th>รายการสินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
 </table>
 
 <h3 id="summary"></h3>
-<h4 id="thaiText"></h4>
 
 <div class="footer">
 <div class="box">ผู้อนุมัติ</div>
@@ -189,7 +129,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <table>
 <thead>
-<tr><th>เลขบิล</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th><th>สถานะ</th></tr>
+<tr><th>เลขบิล</th><th>ประเภท</th><th>ลูกค้า</th><th>ยอด</th></tr>
 </thead>
 <tbody id="historyTable"></tbody>
 </table>
@@ -198,87 +138,96 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" class="container" style="display:none">
+<canvas id="typeChart"></canvas>
 <canvas id="monthChart"></canvas>
-<canvas id="yearChart"></canvas>
 </div>
 
 <script>
 
 const API="https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec";
 
+let customers=JSON.parse(localStorage.getItem("customers")||"[]");
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 let items=[];
 
-/* GENERATE ID */
-function generateID(){
-let c=localStorage.getItem("invoiceCount")||0;
-c++;
-localStorage.setItem("invoiceCount",c);
-return "INV-"+String(c).padStart(4,'0');
+let docPrefix="INV";
+
+/* DOC TYPE */
+function changeDocType(v){
+docPrefix=v;
+docType.innerText=
+v==="INV"?"ใบกำกับภาษี":
+v==="RC"?"ใบเสร็จรับเงิน":"ใบสั่งสินค้า";
+generateID();
 }
 
-let invoiceNumber=generateID();
-invoiceNo.innerText=invoiceNumber;
+/* GENERATE ID */
+function generateID(){
+let c=localStorage.getItem(docPrefix)||0;
+c++;
+localStorage.setItem(docPrefix,c);
+invoiceNo.innerText=docPrefix+"-"+String(c).padStart(4,'0');
+}
+generateID();
 
-/* ADD ITEM */
-function addItem(){
+/* CUSTOMER SYSTEM */
+function saveCustomer(){
+customers.push({name:customer.value,address:address.value});
+localStorage.setItem("customers",JSON.stringify(customers));
+loadTopCustomers();
+}
 
-let total=(qty.value*price.value)-discount.value;
-
-items.push({
-name:name.value,
-qty:+qty.value,
-dozen:+dozen.value,
-yard:+yard.value,
-price:+price.value,
-discount:+discount.value,
-total
+function searchCustomer(){
+let val=customerSearch.value.toLowerCase();
+let html="";
+customers.filter(c=>c.name.toLowerCase().includes(val)).forEach(c=>{
+html+=`<div onclick="selectCust('${c.name}','${c.address}')">${c.name}</div>`;
 });
+suggestions.innerHTML=html;
+}
 
+function selectCust(name,address){
+customer.value=name;
+address.value=address;
+}
+
+function loadTopCustomers(){
+let html="";
+customers.slice(-10).forEach(c=>{
+html+=`<button onclick="selectCust('${c.name}','${c.address}')">${c.name}</button>`;
+});
+topCustomers.innerHTML=html;
+}
+loadTopCustomers();
+
+/* ITEMS */
+function addItem(){
+let total=(qty.value*price.value)-discount.value;
+items.push({name:name.value,qty:+qty.value,dozen:+dozen.value,yard:+yard.value,price:+price.value,discount:+discount.value,total});
 render();
 }
 
 function render(){
-
-let html="",subtotal=0;
-
+let html="",sum=0;
 items.forEach((i,x)=>{
-html+=`
-<tr>
-<td>${x+1}</td>
-<td>${i.name}</td>
-<td>${i.qty}</td>
-<td>${i.dozen}</td>
-<td>${i.yard}</td>
-<td>${i.price}</td>
-<td>${i.discount}</td>
-<td>${i.total}</td>
-</tr>`;
-subtotal+=i.total;
+html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>${i.dozen}</td><td>${i.yard}</td><td>${i.price}</td><td>${i.discount}</td><td>${i.total}</td></tr>`;
+sum+=i.total;
 });
-
 table.innerHTML=html;
-
-let vat=subtotal*0.07;
-let total=subtotal+vat;
-
-summary.innerText=`Subtotal ${subtotal} | VAT ${vat.toFixed(2)} | Total ${total.toFixed(2)}`;
-thaiText.innerText=total.toLocaleString("th-TH")+" บาทถ้วน";
+let vat=sum*0.07;
+summary.innerText=`Subtotal ${sum} VAT ${vat} Total ${sum+vat}`;
 }
 
 /* INSERT */
 function INSERT(){
 
-let subtotal=items.reduce((s,i)=>s+i.total,0);
-let vat=subtotal*0.07;
-let total=subtotal+vat;
-
+let total=items.reduce((s,i)=>s+i.total,0);
 let bill={
-id:invoiceNumber,
+id:invoiceNo.innerText,
+type:docPrefix,
 customer:customer.value,
 date:date.value,
-total,
-status:"active"
+total
 };
 
 bills.push(bill);
@@ -296,40 +245,33 @@ alert("บันทึกแล้ว");
 /* SELECT */
 function SELECT(){
 let k=search.value.toLowerCase();
-let f=bills.filter(b=>b.id.toLowerCase().includes(k)||b.customer.toLowerCase().includes(k));
-
 let html="";
-f.forEach(b=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.customer}</td>
-<td>${b.date}</td>
-<td>${b.total}</td>
-<td>${b.status}</td>
-</tr>`;
+bills.filter(b=>b.id.toLowerCase().includes(k)||b.customer.toLowerCase().includes(k))
+.forEach(b=>{
+html+=`<tr><td>${b.id}</td><td>${b.type}</td><td>${b.customer}</td><td>${b.total}</td></tr>`;
 });
 historyTable.innerHTML=html;
 }
+SELECT();
 
 /* DASHBOARD */
-let m={},y={};
+let typeCount={INV:0,RC:0,PO:0};
+bills.forEach(b=>typeCount[b.type]+=b.total);
 
+new Chart(typeChart,{
+type:"pie",
+data:{labels:["INV","RC","PO"],datasets:[{data:Object.values(typeCount)}]}
+});
+
+let m={};
 bills.forEach(b=>{
 let mo=b.date?.slice(0,7);
-let ye=b.date?.slice(0,4);
-
 m[mo]=(m[mo]||0)+b.total;
-y[ye]=(y[ye]||0)+b.total;
 });
 
 new Chart(monthChart,{
 type:"bar",
 data:{labels:Object.keys(m),datasets:[{label:"รายเดือน",data:Object.values(m)}]}
-});
-
-new Chart(yearChart,{
-type:"line",
-data:{labels:Object.keys(y),datasets:[{label:"รายปี",data:Object.values(y)}]}
 });
 
 function showPage(p){
