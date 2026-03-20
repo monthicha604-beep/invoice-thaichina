@@ -73,6 +73,7 @@ th, td {
 
   <h1>ใบกำกับภาษี / INVOICE</h1>
 </div>
+  <p id="invoiceNo" style="text-align:right; font-weight:bold;"></p>
   
 <input id="customer" placeholder="ชื่อลูกค้า">
 <input id="taxId" placeholder="เลขผู้เสียภาษี">
@@ -168,3 +169,9 @@ function printBill() {
 
 </body>
 </html>
+let count = localStorage.getItem("invoiceCount") || 0;
+count++;
+localStorage.setItem("invoiceCount", count);
+
+let invoiceNumber = "INV-" + String(count).padStart(4, '0');
+document.getElementById("invoiceNo").innerText = "เลขที่บิล: " + invoiceNumber;
