@@ -2,142 +2,384 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<title>Invoice System</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-
 <style>
-body { font-family:'Sarabun'; background:#f5f5f5; }
-.container { max-width:900px; margin:auto; background:white; padding:20px; }
-</style>
+body{
+  font-family:'Sarabun';
+  background:#f4f6f9;
+  margin:0;
+}
 
+.nav{
+  background:#111;
+  color:#fff;
+  padding:12px;
+  display:flex;
+  gap:15px;
+}
+
+.nav button{
+  background:none;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.container{
+  width:210mm;
+  min-height:297mm;
+  margin:20px auto;
+  background:#fff;
+  padding:20mm;
+  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  margin-top:20px;
+}
+
+.left,.right{width:48%}
+.right{text-align:right}
+
+/* INPUT */
+input,select{
+  width:100%;
+  padding:6px;
+  margin:4px 0;
+  border:1px solid #ccc;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  border:1px solid #ddd;
+  padding:6px;
+  text-align:center;
+}
+
+th{
+  background:#f2f2f2;
+}
+
+/* BUTTON */
+button{
+  background:#000;
+  color:#fff;
+  padding:8px;
+  border:none;
+  margin-top:6px;
+  cursor:pointer;
+}
+
+/* FOOTER */
+.footer{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  margin-top:40px;
+  text-align:center;
+}
+
+.line{
+  border-bottom:1px solid #000;
+  margin-top:30px;
+}
+
+@media print{
+  body{background:#fff}
+  .nav,button,input,select{display:none}
+  .container{box-shadow:none}
+}
+</style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="nav">
+<button onclick="showPage('bill')">ออกบิล</button>
+<button onclick="showPage('history')">ประวัติ</button>
+<button onclick="showPage('dashboard')">Dashboard</button>
+</div>
 
-<h2>ระบบออกบิล</h2>
+<!-- BILL -->
+<div id="billPage" class="container">
+
+<div style="text-align:center">
+<img src="logo.png" style="width:100px"><br><br>
+<b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
+THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
+3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพมหานคร<br>
+เลขผู้เสียภาษี: 0103566005842
+<h2>ใบกำกับภาษี / INVOICE</h2>
+</div>
+
+<div class="header">
+
+<div class="left">
+<select id="customerSelect" onchange="selectCustomer()"></select>
 
 <input id="customer" placeholder="ลูกค้า">
-<input id="date" type="date">
+<input id="address" placeholder="ที่อยู่">
+
+<button onclick="saveCustomer()">บันทึกลูกค้า</button>
+</div>
+
+<div class="right">
+<p id="invoiceNo"></p>
+<input type="date" id="date">
+
+<button onclick="prevInvoice()">⬅️</button>
+<button onclick="resetInvoice()">ตั้งเลข</button>
+</div>
+
+</div>
+
+<h3>รายการสินค้า</h3>
 
 <input id="name" placeholder="สินค้า">
-<input id="price" placeholder="ราคา">
-<input id="qty" placeholder="จำนวน">
+<input id="qty" type="number" placeholder="จำนวน">
+<input id="price" type="number" placeholder="ราคาต่อหน่วย">
+<input id="discount" type="number" placeholder="ส่วนลด">
 
-<button onclick="addItem()">เพิ่ม</button>
+<button onclick="addItem()">เพิ่มสินค้า</button>
 
-<table id="table"></table>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>รายการสินค้า</th>
+<th>จำนวน</th>
+<th>ราคา</th>
+<th>ส่วนลด</th>
+<th>รวม</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
 
-<h3 id="total"></h3>
+<h3 id="summary"></h3>
 
-<button onclick= function saveBill(){
+<div class="footer">
+<div>ผู้อนุมัติ<div class="line"></div></div>
+<div>ผู้รับเงิน<div class="line"></div></div>
+<div>ผู้รับสินค้า<div class="line"></div></div>
+<div>วันที่รับ<div class="line"></div></div>
+</div>
 
-  let total = items.reduce((sum,i)=>sum+i.total,0);
-  let vat = total * 0.07;
-  let grand = total + vat;
+<button onclick="saveBill()">💾 บันทึกบิล</button>
+<button onclick="window.print()">📄 PDF</button>
 
-  let data = {
-    invoice: invoiceNumber,
-    customer: document.getElementById("customer").value,
-    total,
-    vat,
-    grand
-  };
+</div>
 
-  // 🔥 ส่งข้อมูลไป Google Sheets
-  fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(data)
-  })
-  .then(()=> alert("บันทึกออนไลน์แล้ว ✅"))
-  .catch(()=> alert("ส่งข้อมูลไม่สำเร็จ ❌"));
+<!-- HISTORY -->
+<div id="historyPage" class="container" style="display:none">
 
-}
+<h2>ประวัติบิล</h2>
 
-<hr>
+<input type="date" id="filterDate">
+<input type="month" id="filterMonth">
 
-<h2>📊 Dashboard</h2>
-<p id="summary"></p>
+<button onclick="filterHistory()">ค้นหา</button>
 
-<h2>📄 ประวัติ</h2>
-<div id="history"></div>
+<table>
+<thead>
+<tr>
+<th>เลขบิล</th>
+<th>ลูกค้า</th>
+<th>วันที่</th>
+<th>ยอดสุทธิ</th>
+</tr>
+</thead>
+<tbody id="historyTable"></tbody>
+</table>
+
+<button onclick="exportCSV()">Export CSV</button>
+
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboardPage" class="container" style="display:none">
+
+<h2>Dashboard</h2>
+<p id="totalSales"></p>
 
 </div>
 
 <script>
-  const API_URL = https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec
 
-// 🔥 ใส่ config คุณตรงนี้
-const firebaseConfig = {
-  apiKey: "ใส่ของคุณ",
-  authDomain: "ใส่ของคุณ",
-  projectId: "ใส่ของคุณ"
-};
+// 🔥 ใส่ API ตรงนี้
+const API_URL = "";
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// ===== เลขบิล =====
+let count = localStorage.getItem("invoiceCount") || 0;
+count++;
+localStorage.setItem("invoiceCount", count);
 
-let items = [];
+let invoiceNumber = "INV-" + String(count).padStart(4,'0');
+invoiceNo.innerText = "เลขที่บิล: " + invoiceNumber;
+
+function prevInvoice(){
+count=Math.max(1,count-1);
+localStorage.setItem("invoiceCount",count);
+location.reload();
+}
+
+function resetInvoice(){
+let num=prompt("ตั้งเลขใหม่");
+if(num){localStorage.setItem("invoiceCount",num);location.reload();}
+}
+
+// ===== ลูกค้า =====
+let customers=JSON.parse(localStorage.getItem("customers")||"[]");
+
+function saveCustomer(){
+customers.push({name:customer.value,address:address.value});
+localStorage.setItem("customers",JSON.stringify(customers));
+loadCustomers();
+}
+
+function loadCustomers(){
+let html="<option>--ลูกค้า--</option>";
+customers.forEach((c,i)=>html+=`<option value="${i}">${c.name}</option>`);
+customerSelect.innerHTML=html;
+}
+function selectCustomer(){
+let c=customers[customerSelect.value];
+if(c){customer.value=c.name;address.value=c.address;}
+}
+loadCustomers();
+
+// ===== สินค้า =====
+let items=[];
 
 function addItem(){
-  let name = document.getElementById("name").value;
-  let price = +document.getElementById("price").value;
-  let qty = +document.getElementById("qty").value;
-
-  items.push({name,price,qty});
-  render();
+let total=(qty.value*price.value)-discount.value;
+items.push({
+name:name.value,
+qty:+qty.value,
+price:+price.value,
+discount:+discount.value,
+total
+});
+render();
 }
 
 function render(){
-  let html="", total=0;
+let html="",total=0;
+items.forEach((i,x)=>{
+html+=`<tr>
+<td>${x+1}</td>
+<td>${i.name}</td>
+<td>${i.qty}</td>
+<td>${i.price}</td>
+<td>${i.discount}</td>
+<td>${i.total}</td>
+</tr>`;
+total+=i.total;
+});
 
-  items.forEach(i=>{
-    let t=i.price*i.qty;
-    total+=t;
-    html+=`<tr><td>${i.name}</td><td>${t}</td></tr>`;
-  });
+table.innerHTML=html;
 
-  document.getElementById("table").innerHTML=html;
-  document.getElementById("total").innerText="รวม: "+total;
+let vat=total*0.07;
+let grand=total+vat;
+
+summary.innerText=`รวม ${total} | VAT ${vat.toFixed(2)} | สุทธิ ${grand.toFixed(2)}`;
 }
 
-async function saveBill(){
-  let total = items.reduce((s,i)=>s+i.price*i.qty,0);
+// ===== บันทึก =====
+let bills=JSON.parse(localStorage.getItem("bills")||"[]");
 
-  await db.collection("bills").add({
-    customer: document.getElementById("customer").value,
-    date: document.getElementById("date").value,
-    total,
-    items
-  });
+function saveBill(){
 
-  alert("บันทึกแล้ว");
-  loadData();
+let total=items.reduce((s,i)=>s+i.total,0);
+let vat=total*0.07;
+let grand=total+vat;
+
+let bill={
+invoice:invoiceNumber,
+customer:customer.value,
+date:date.value,
+grand
+};
+
+bills.push(bill);
+localStorage.setItem("bills",JSON.stringify(bills));
+
+// 🔥 ส่งออนไลน์
+fetch(API_URL,{https://script.google.com/macros/s/AKfycbzP8MW4qH9lkdS56vj-6c_4jI6R0yWNYNolRWkH_NVvCTNHLnu9wlrpuvksN9MCeJng/exec
+method:"POST",
+body:JSON.stringify(bill)
+});
+
+alert("บันทึกเรียบร้อย");
+
 }
 
-async function loadData(){
-  let snap = await db.collection("bills").get();
-
-  let total=0;
-  let html="";
-
-  snap.forEach(doc=>{
-    let d=doc.data();
-    total+=d.total;
-
-    html+=`<div>
-      ${d.date} - ${d.customer} - ${d.total}
-    </div>`;
-  });
-
-  document.getElementById("summary").innerText="ยอดรวมทั้งหมด: "+total;
-  document.getElementById("history").innerHTML=html;
+// ===== HISTORY =====
+function renderHistory(data){
+let html="";
+data.forEach(b=>{
+html+=`<tr>
+<td>${b.invoice}</td>
+<td>${b.customer}</td>
+<td>${b.date}</td>
+<td>${b.grand}</td>
+</tr>`;
+});
+historyTable.innerHTML=html;
 }
 
-loadData();
+function filterHistory(){
+let d=filterDate.value;
+let m=filterMonth.value;
+
+let f=bills;
+
+if(d)f=bills.filter(b=>b.date===d);
+if(m)f=bills.filter(b=>b.date.startsWith(m));
+
+renderHistory(f);
+}
+
+renderHistory(bills);
+
+// ===== DASHBOARD =====
+function loadDashboard(){
+let total=bills.reduce((s,b)=>s+b.grand,0);
+totalSales.innerText="ยอดขายรวม: "+total;
+}
+loadDashboard();
+
+// ===== EXPORT =====
+function exportCSV(){
+let csv="เลขบิล,ลูกค้า,วันที่,ยอด\n";
+bills.forEach(b=>{
+csv+=`${b.invoice},${b.customer},${b.date},${b.grand}\n`;
+});
+let blob=new Blob([csv]);
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="report.csv";
+a.click();
+}
+
+// ===== PAGE =====
+function showPage(p){
+billPage.style.display=p==="bill"?"block":"none";
+historyPage.style.display=p==="history"?"block":"none";
+dashboardPage.style.display=p==="dashboard"?"block":"none";
+}
 
 </script>
 
