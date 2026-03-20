@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Thai China ERP Ultimate</title>
+<title>Thai China ERP Complete</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,13 +25,12 @@ border:2px solid #d4af37;
 .header{display:flex;justify-content:space-between;margin-top:15px}
 .box{border:1px solid #ddd;padding:10px;border-radius:6px;width:48%}
 
-table{width:100%;border-collapse:collapse;margin-top:15px}
-th,td{border:1px solid #ddd;padding:8px;text-align:center}
-th{background:#f8f8f8}
+input{width:100%;padding:6px;margin:3px 0}
 
-.summary{width:260px;margin-left:auto;margin-top:10px;border:1px solid #ddd;padding:10px}
-.summary p{display:flex;justify-content:space-between}
-.total{font-weight:bold;border-top:1px solid #000}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+
+.summary{width:250px;margin-left:auto;border:1px solid #ddd;padding:10px}
 
 .modal{
 display:none;
@@ -43,8 +42,7 @@ justify-content:center;align-items:center;
 .modal-box{background:#fff;padding:20px;border-radius:10px}
 
 @media print{
-.nav,button,input,select{display:none}
-.container{width:210mm;height:297mm}
+.nav,button,input{display:none}
 }
 </style>
 </head>
@@ -63,38 +61,53 @@ justify-content:center;align-items:center;
 <h2 id="docType">ใบกำกับภาษี</h2>
 
 <select onchange="changeType(this.value)">
-<option value="INV">INV</option>
-<option value="RC">RC</option>
-<option value="PO">PO</option>
+<option value="INV">ใบกำกับภาษี</option>
+<option value="RC">ใบเสร็จ</option>
+<option value="PO">ใบสั่งสินค้า</option>
 </select>
 
 <div class="header">
 <div class="box">
+<input id="customerSearch" placeholder="ค้นหา" oninput="searchCustomer()">
+<div id="suggestions"></div>
+<div id="topCustomers"></div>
+
 <input id="customer" placeholder="ลูกค้า">
+<input id="address" placeholder="ที่อยู่">
+<input id="tax" placeholder="เลขภาษี">
+<button onclick="saveCustomer()">บันทึก</button>
 </div>
 
 <div class="box">
 เลขที่: <span id="invoiceNo"></span><br>
 วันที่: <input type="date" id="date"><br>
-
-<button onclick="prevBill()">◀️ ก่อนหน้า</button>
-<button onclick="nextBill()">ถัดไป ▶️</button>
-
+<button onclick="prevBill()">◀️</button>
+<button onclick="nextBill()">▶️</button>
 </div>
 </div>
 
+<input id="name" placeholder="สินค้า">
+<input id="qty" placeholder="จำนวน">
+<input id="dozen" placeholder="โหล">
+<input id="yard" placeholder="หลา">
 <input id="price" placeholder="ราคา">
-<button onclick="addItem()">เพิ่ม</button>
+<input id="discount" placeholder="ส่วนลด">
+
+<button onclick="addItem()">เพิ่มสินค้า</button>
 
 <table>
-<thead><tr><th>#</th><th>ราคา</th></tr></thead>
+<thead>
+<tr>
+<th>#</th><th>สินค้า</th><th>จำนวน</th><th>โหล</th><th>หลา</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
+</tr>
+</thead>
 <tbody id="table"></tbody>
 </table>
 
 <div class="summary">
-<p><span>Subtotal</span><span id="subtotal"></span></p>
-<p id="vatRow"><span>VAT</span><span id="vat"></span></p>
-<p class="total"><span>Total</span><span id="total"></span></p>
+<p id="subtotal"></p>
+<p id="vatRow"><span>VAT:</span> <span id="vat"></span></p>
+<p id="total"></p>
 </div>
 
 <button onclick="openPayment()">บันทึก</button>
@@ -106,11 +119,17 @@ justify-content:center;align-items:center;
 <div class="modal-box">
 <button onclick="cash()">เงินสด</button>
 <button onclick="credit()">CREDIT</button>
+<div id="creditBox" style="display:none">
+<input type="date" id="due">
+<button onclick="confirmCredit()">ยืนยัน</button>
+</div>
 </div>
 </div>
 
 <!-- HISTORY -->
 <div id="historyPage" class="container" style="display:none">
+<input id="search" placeholder="ค้นหา">
+<button onclick="loadHistory()">ค้นหา</button>
 <table>
 <tbody id="historyTable"></tbody>
 </table>
@@ -125,73 +144,69 @@ justify-content:center;align-items:center;
 
 let items=[];
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
-let currentIndex=-1;
+let customers=JSON.parse(localStorage.getItem("customers")||"[]");
 let prefix="INV";
+let currentIndex=-1;
+
+/* TYPE */
+function changeType(v){
+prefix=v;
+docType.innerText=v==="INV"?"ใบกำกับภาษี":v==="RC"?"ใบเสร็จ":"ใบสั่งสินค้า";
+generateID(); render();
+}
 
 /* ID */
 function generateID(){
 let c=localStorage.getItem(prefix)||0;
 c++;
 localStorage.setItem(prefix,c);
-return prefix+"-"+String(c).padStart(4,'0');
+invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
 }
+generateID();
 
-/* TYPE */
-function changeType(v){
-prefix=v;
-invoiceNo.innerText=generateID();
-render();
-}
-
-/* ITEM */
+/* ITEMS */
 function addItem(){
-items.push(Number(price.value));
+let total=(qty.value*price.value)-discount.value;
+items.push({name:name.value,qty:qty.value,dozen:dozen.value,yard:yard.value,price:price.value,discount:discount.value,total});
 render();
 }
 
 function render(){
 let html="",sum=0;
 items.forEach((i,x)=>{
-html+=`<tr><td>${x+1}</td><td>${i}</td></tr>`;
-sum+=i;
+html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>${i.dozen}</td><td>${i.yard}</td><td>${i.price}</td><td>${i.discount}</td><td>${i.total}</td></tr>`;
+sum+=i.total;
 });
 table.innerHTML=html;
 
-let vatVal = prefix==="INV"?sum*0.07:0;
-subtotal.innerText=sum;
+let vatVal=prefix==="INV"?sum*0.07:0;
 
+subtotal.innerText="Subtotal: "+sum;
 if(prefix==="INV"){
 vatRow.style.display="block";
 vat.innerText=vatVal.toFixed(2);
 }else{
 vatRow.style.display="none";
 }
-
-total.innerText=(sum+vatVal).toFixed(2);
+total.innerText="Total: "+(sum+vatVal).toFixed(2);
 }
 
 /* PAYMENT */
-function openPayment(){
-paymentModal.style.display="flex";
-}
+function openPayment(){paymentModal.style.display="flex"}
+function cash(){saveBill("เงินสด")}
+function credit(){creditBox.style.display="block"}
+function confirmCredit(){saveBill("CREDIT")}
 
-function cash(){
-saveBill("เงินสด");
-}
-
-function credit(){
-saveBill("CREDIT");
-}
-
+/* SAVE */
 function saveBill(method){
-
-let sum=items.reduce((a,b)=>a+b,0);
-let vatVal = prefix==="INV"?sum*0.07:0;
+let sum=items.reduce((s,i)=>s+i.total,0);
+let vatVal=prefix==="INV"?sum*0.07:0;
 
 let bill={
 id:invoiceNo.innerText,
 customer:customer.value,
-total:sum+vatVal
+total:sum+vatVal,
+status:"active"
 };
 
 bills.push(bill);
@@ -203,7 +218,7 @@ alert("บันทึกแล้ว");
 paymentModal.style.display="none";
 }
 
-/* NAVIGATION */
+/* NAV */
 function prevBill(){
 if(currentIndex>0){
 currentIndex--;
@@ -214,15 +229,63 @@ loadBill();
 function nextBill(){
 items=[];
 customer.value="";
-invoiceNo.innerText=generateID();
+generateID();
 render();
 }
 
-/* LOAD */
 function loadBill(){
 let b=bills[currentIndex];
 customer.value=b.customer;
 invoiceNo.innerText=b.id;
+}
+
+/* CUSTOMER */
+function saveCustomer(){
+customers.push({name:customer.value,address:address.value,tax:tax.value});
+localStorage.setItem("customers",JSON.stringify(customers));
+loadTop();
+}
+
+function loadTop(){
+let html="";
+customers.slice(-10).forEach((c,i)=>{
+html+=`<div><button onclick="selectCust(${i})">${c.name}</button></div>`;
+});
+topCustomers.innerHTML=html;
+}
+loadTop();
+
+function selectCust(i){
+let c=customers[i];
+customer.value=c.name;
+address.value=c.address;
+tax.value=c.tax;
+}
+
+function searchCustomer(){
+let val=customerSearch.value.toLowerCase();
+let html="";
+customers.forEach((c,i)=>{
+if(c.name.toLowerCase().includes(val)){
+html+=`<div onclick="selectCust(${i})">${c.name}</div>`;
+}
+});
+suggestions.innerHTML=html;
+}
+
+/* HISTORY */
+function loadHistory(){
+let html="";
+bills.forEach((b,i)=>{
+html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td><td>${b.status}</td></tr>`;
+});
+historyTable.innerHTML=html;
+}
+
+/* DASHBOARD */
+function loadChart(){
+let data=bills.map(b=>b.total);
+new Chart(chart,{type:"bar",data:{labels:data,datasets:[{data}]}})
 }
 
 /* PAGE */
@@ -232,9 +295,9 @@ historyPage.style.display="none";
 dashboardPage.style.display="none";
 
 if(p==="bill") billPage.style.display="block";
+if(p==="history"){historyPage.style.display="block";loadHistory();}
+if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
 }
-
-invoiceNo.innerText=generateID();
 
 </script>
 
