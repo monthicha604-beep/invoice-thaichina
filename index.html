@@ -2,21 +2,25 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Thai China Invoice System</title>
+<title>Thai China Invoice Pro</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{font-family:'Sarabun';background:#eef2f7;margin:0}
+body{
+  font-family:'Sarabun';
+  background:#eef2f7;
+  margin:0;
+}
 
 /* NAV */
 .nav{
   background:#0f172a;
   color:#fff;
-  padding:14px;
+  padding:12px;
   display:flex;
-  gap:12px;
+  gap:10px;
 }
 .nav button{
   background:none;
@@ -25,21 +29,21 @@ body{font-family:'Sarabun';background:#eef2f7;margin:0}
   cursor:pointer;
 }
 
-/* CONTAINER A4 */
+/* A4 */
 .container{
   width:210mm;
   min-height:297mm;
   margin:20px auto;
   background:#fff;
-  padding:20mm;
-  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+  padding:15mm;
+  box-shadow:0 8px 25px rgba(0,0,0,0.1);
 }
 
 /* HEADER */
 .header{
   display:flex;
   justify-content:space-between;
-  margin-top:20px;
+  margin-top:15px;
 }
 
 .left,.right{width:48%}
@@ -48,7 +52,7 @@ body{font-family:'Sarabun';background:#eef2f7;margin:0}
 /* INPUT */
 input,select{
   width:100%;
-  padding:8px;
+  padding:6px;
   margin:4px 0;
   border:1px solid #ddd;
 }
@@ -61,7 +65,7 @@ table{
 }
 th,td{
   border:1px solid #ddd;
-  padding:8px;
+  padding:6px;
   text-align:center;
 }
 th{background:#f1f5f9}
@@ -70,28 +74,33 @@ th{background:#f1f5f9}
 .footer{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  margin-top:40px;
+  gap:10px;
+  margin-top:30px;
   text-align:center;
 }
-.line{border-bottom:1px solid #000;margin-top:30px}
+.box{
+  border:1px solid #000;
+  height:70px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
 
-/* PRINT A4 FIX */
+/* PRINT FIX */
 @media print{
   body{background:#fff}
   .nav,button,input,select{display:none}
   .container{
     width:210mm;
     height:297mm;
-    padding:15mm;
     box-shadow:none;
   }
 }
 
-/* BUTTON */
 button{
   background:#0f172a;
   color:#fff;
-  padding:8px;
+  padding:6px;
   border:none;
   margin-top:5px;
 }
@@ -110,7 +119,7 @@ button{
 <div id="billPage" class="container">
 
 <div style="text-align:center">
-<img src="logo.png" style="width:90px"><br><br>
+<img src="logo.png" style="width:80px"><br><br>
 <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
 THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพมหานคร<br>
@@ -118,16 +127,10 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <h2 id="docType">ใบกำกับภาษี</h2>
 </div>
 
-<select onchange="changeDocType(this.value)">
-<option value="invoice">ใบกำกับภาษี</option>
-<option value="quote">ใบเสนอราคา</option>
-<option value="receipt">ใบเสร็จ</option>
-</select>
-
 <div class="header">
 <div class="left">
 <input id="customer" placeholder="ลูกค้า">
-<input id="address" placeholder="ที่อยู่">
+<input id="address" placeholder="ที่อยู่ลูกค้า">
 </div>
 
 <div class="right">
@@ -139,8 +142,10 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <h3>รายการสินค้า</h3>
 
 <input id="name" placeholder="สินค้า">
-<input id="qty" type="number" placeholder="จำนวน">
-<input id="price" type="number" placeholder="ราคา">
+<input id="qty" type="number" placeholder="ลำดับ">
+<input id="dozen" type="number" placeholder="จำนวนโหล">
+<input id="yard" type="number" placeholder="จำนวนหลา">
+<input id="price" type="number" placeholder="ราคาต่อหน่วย">
 <input id="discount" type="number" placeholder="ส่วนลด">
 
 <button onclick="addItem()">เพิ่มสินค้า</button>
@@ -148,7 +153,14 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <table>
 <thead>
 <tr>
-<th>#</th><th>สินค้า</th><th>จำนวน</th><th>ราคา</th><th>ส่วนลด</th><th>รวม</th>
+<th>#</th>
+<th>สินค้า</th>
+<th>ลำดับ</th>
+<th>โหล</th>
+<th>หลา</th>
+<th>ราคา</th>
+<th>ส่วนลด</th>
+<th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -158,14 +170,14 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <h4 id="thaiText"></h4>
 
 <div class="footer">
-<div>ผู้อนุมัติ<div class="line"></div></div>
-<div>ผู้รับเงิน<div class="line"></div></div>
-<div>ผู้รับสินค้า<div class="line"></div></div>
-<div>วันที่รับ<div class="line"></div></div>
+<div class="box">ผู้อนุมัติ</div>
+<div class="box">ผู้รับเงิน</div>
+<div class="box">ผู้รับสินค้า</div>
+<div class="box">วันที่รับ</div>
 </div>
 
-<button onclick="INSERT()">💾 บันทึก</button>
-<button onclick="window.print()">📄 PDF</button>
+<button onclick="INSERT()">บันทึก</button>
+<button onclick="window.print()">PDF</button>
 
 </div>
 
@@ -210,16 +222,38 @@ invoiceNo.innerText=invoiceNumber;
 
 /* ADD ITEM */
 function addItem(){
+
 let total=(qty.value*price.value)-discount.value;
-items.push({name:name.value,qty:+qty.value,price:+price.value,discount:+discount.value,total});
+
+items.push({
+name:name.value,
+qty:+qty.value,
+dozen:+dozen.value,
+yard:+yard.value,
+price:+price.value,
+discount:+discount.value,
+total
+});
+
 render();
 }
 
 function render(){
+
 let html="",subtotal=0;
 
 items.forEach((i,x)=>{
-html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>${i.price}</td><td>${i.discount}</td><td>${i.total}</td></tr>`;
+html+=`
+<tr>
+<td>${x+1}</td>
+<td>${i.name}</td>
+<td>${i.qty}</td>
+<td>${i.dozen}</td>
+<td>${i.yard}</td>
+<td>${i.price}</td>
+<td>${i.discount}</td>
+<td>${i.total}</td>
+</tr>`;
 subtotal+=i.total;
 });
 
@@ -266,14 +300,20 @@ let f=bills.filter(b=>b.id.toLowerCase().includes(k)||b.customer.toLowerCase().i
 
 let html="";
 f.forEach(b=>{
-html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.date}</td><td>${b.total}</td><td>${b.status}</td></tr>`;
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.customer}</td>
+<td>${b.date}</td>
+<td>${b.total}</td>
+<td>${b.status}</td>
+</tr>`;
 });
 historyTable.innerHTML=html;
 }
-SELECT();
 
 /* DASHBOARD */
 let m={},y={};
+
 bills.forEach(b=>{
 let mo=b.date?.slice(0,7);
 let ye=b.date?.slice(0,4);
@@ -296,12 +336,6 @@ function showPage(p){
 billPage.style.display=p==="bill"?"block":"none";
 historyPage.style.display=p==="history"?"block":"none";
 dashboardPage.style.display=p==="dashboard"?"block":"none";
-}
-
-function changeDocType(v){
-docType.innerText=
-v==="invoice"?"ใบกำกับภาษี":
-v==="quote"?"ใบเสนอราคา":"ใบเสร็จ";
 }
 
 </script>
