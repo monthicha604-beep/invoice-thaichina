@@ -2,246 +2,192 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>THAI CHINA FABRIC ERP PRO</title>
+  <title>THAI CHINA FABRIC CLOUD ERP</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Segoe UI', Arial; margin: 0; background:#eef1f7; }
-    .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:15px; flex-wrap:wrap; }
-    .menu button { background:none; border:none; color:white; font-size:14px; cursor:pointer; }
+    body { font-family: 'Segoe UI'; margin:0; background:#eef1f7; }
+    .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:10px; }
+    .menu button { background:none; border:none; color:white; cursor:pointer; }
     .container { padding:20px; }
-    .box { background:white; padding:25px; border-radius:12px; box-shadow:0 0 15px rgba(0,0,0,0.08); }
-    .header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1f2a44; padding-bottom:10px; }
-    table { width:100%; border-collapse: collapse; margin-top:15px; }
+    .box { background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    table { width:100%; border-collapse: collapse; margin-top:10px; }
     table, th, td { border:1px solid #ccc; }
     th { background:#1f2a44; color:white; }
-    th, td { padding:8px; text-align:center; }
-    input, select { width:100%; padding:5px; margin:3px 0; border:1px solid #ddd; border-radius:4px; }
-    .right { text-align:right; margin-top:10px; }
-    .btn { padding:8px 14px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#1f2a44; color:white; }
-    .logo { width:120px; }
-    .title { text-align:center; font-size:22px; font-weight:bold; margin-top:10px; }
+    th, td { padding:6px; text-align:center; }
+    input, select { width:100%; padding:5px; margin:3px 0; }
+    .btn { padding:6px 12px; margin-top:10px; background:#1f2a44; color:white; border:none; }
   </style>
 </head>
 <body>
 
 <div class="menu">
-  <button onclick="openDoc('invoice')">ใบแจ้งหนี้</button>
-  <button onclick="openDoc('receipt')">ใบเสร็จ</button>
+  <button onclick="openDoc()">ออกบิล</button>
   <button onclick="showPage('dashboard')">Dashboard</button>
   <button onclick="showPage('report')">รายงาน</button>
-  <button onclick="showPage('users')">ผู้ใช้</button>
+  <button onclick="showPage('customerReport')">ยอดขายตามลูกค้า</button>
 </div>
 
 <div class="container">
   <div id="documentPage" class="box">
-    <div id="docArea">
-      <div class="header">
-        <div>
-          <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-          เลขผู้เสียภาษี 0103566005842
-        </div>
-        <div>
-          <img src="logo.png" class="logo"><br>
-          <img src="signature.png" style="width:120px;">
-        </div>
-      </div>
+    <h2>ใบแจ้งหนี้</h2>
+    เลขที่: <b id="docNo"></b>
+    <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
+    <input type="date" id="date">
 
-      <div class="title" id="docTitle"></div>
-      เลขที่เอกสาร: <b id="docNo"></b>
+    <table id="itemTable">
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>รายการ</th>
+          <th>จำนวน</th>
+          <th>ราคา</th>
+          <th>รวม</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-      <h3>ข้อมูลลูกค้า</h3>
-      <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
-      <input type="date" id="date">
+    <button class="btn" onclick="addRow()">เพิ่ม</button>
+    <h3>รวม: <span id="grandTotal">0</span></h3>
 
-      <table id="itemTable">
-        <thead>
-          <tr>
-            <th>ลำดับ</th>
-            <th>รายการ</th>
-            <th>จำนวน</th>
-            <th>ราคา</th>
-            <th>รวม</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-
-      <button class="btn" onclick="addRow()">+ เพิ่มรายการ</button>
-
-      <div class="right">
-        วิธีชำระเงิน:
-        <select id="payment">
-          <option>เงินสด</option>
-          <option>โอน</option>
-          <option>CREDIT</option>
-        </select>
-        <br>
-        รวม: <span id="grandTotal">0</span>
-      </div>
-    </div>
+    <select id="payment">
+      <option>เงินสด</option>
+      <option>โอน</option>
+      <option>CREDIT</option>
+    </select>
 
     <button class="btn" onclick="saveDoc()">บันทึก</button>
-    <button class="btn" onclick="generatePDF()">PDF</button>
   </div>
 
   <div id="dashboard" class="box" style="display:none">
-    <h2>Dashboard ยอดขาย</h2>
+    <h2>Dashboard</h2>
     <canvas id="salesChart"></canvas>
   </div>
 
   <div id="report" class="box" style="display:none">
-    <h2>รายงาน</h2>
+    <h2>รายงานทั้งหมด</h2>
     <table>
-      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th><th>ชำระ</th></tr></thead>
+      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th></tr></thead>
       <tbody id="reportTable"></tbody>
     </table>
   </div>
 
-  <div id="users" class="box" style="display:none">
-    <h2>ผู้ใช้</h2>
-    <input type="text" id="newUser" placeholder="Username">
-    <input type="password" id="newPass" placeholder="Password">
-    <button class="btn" onclick="addUser()">เพิ่มผู้ใช้</button>
-    <ul id="userList"></ul>
+  <div id="customerReport" class="box" style="display:none">
+    <h2>ยอดขายตามลูกค้า</h2>
+    <input type="text" id="searchCustomer" placeholder="พิมพ์ชื่อลูกค้า" oninput="searchCustomer()">
+    <table>
+      <thead><tr><th>เลขที่</th><th>ยอด</th></tr></thead>
+      <tbody id="customerTable"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
-let counter = JSON.parse(localStorage.getItem("docCounter") || "{}");
-let currentType = "invoice";
+// Firebase config (ต้องไปเอาจาก Firebase)
+var firebaseConfig = {
+  apiKey: "YOUR-API-KEY",
+  authDomain: "YOUR-PROJECT.firebaseapp.com",
+  projectId: "YOUR-PROJECT"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
 
-function formatDocNo(type){
-  let year = new Date().getFullYear();
-  if(!counter[type]) counter[type]=1;
-  return type.toUpperCase()+"-"+year+"-"+String(counter[type]).padStart(3,'0');
-}
+let counter = 1;
+document.getElementById("docNo").innerText = "INV-"+counter;
 
-function openDoc(type) {
-  showPage('documentPage');
-  currentType = type;
-  document.getElementById("docNo").innerText = formatDocNo(type);
-  document.getElementById("docTitle").innerText = type=='invoice'?'ใบแจ้งหนี้':'ใบเสร็จรับเงิน';
-}
+function openDoc(){ showPage('documentPage'); }
 
-function showPage(page) {
+function showPage(page){
   document.getElementById('documentPage').style.display='none';
   document.getElementById('dashboard').style.display='none';
   document.getElementById('report').style.display='none';
-  document.getElementById('users').style.display='none';
+  document.getElementById('customerReport').style.display='none';
   document.getElementById(page).style.display='block';
   loadReport();
   loadChart();
-  loadUsers();
 }
 
-function addRow() {
-  let table = document.querySelector("#itemTable tbody");
-  let rowCount = table.rows.length + 1;
+function addRow(){
+  let table = document.querySelector('#itemTable tbody');
   let row = table.insertRow();
+  let rowCount = table.rows.length;
   row.innerHTML = `
     <td>${rowCount}</td>
-    <td><input type="text"></td>
-    <td><input type="number" class="qty" oninput="calculate()"></td>
-    <td><input type="number" class="price" oninput="calculate()"></td>
-    <td class="total">0</td>
-  `;
+    <td><input type='text'></td>
+    <td><input type='number' class='qty' oninput='calculate()'></td>
+    <td><input type='number' class='price' oninput='calculate()'></td>
+    <td class='total'>0</td>`;
 }
 addRow();
 
-function calculate() {
-  let qty = document.querySelectorAll(".qty");
-  let price = document.querySelectorAll(".price");
-  let total = document.querySelectorAll(".total");
-  let sumTotal = 0;
-
-  for (let i = 0; i < qty.length; i++) {
-    let sum = (qty[i].value || 0) * (price[i].value || 0);
-    total[i].innerText = sum.toFixed(2);
-    sumTotal += sum;
+function calculate(){
+  let qty=document.querySelectorAll('.qty');
+  let price=document.querySelectorAll('.price');
+  let total=document.querySelectorAll('.total');
+  let sum=0;
+  for(let i=0;i<qty.length;i++){
+    let s=(qty[i].value||0)*(price[i].value||0);
+    total[i].innerText=s;
+    sum+=s;
   }
-  document.getElementById("grandTotal").innerText = sumTotal.toFixed(2);
+  document.getElementById('grandTotal').innerText=sum;
 }
 
-function saveDoc() {
-  let docNo = document.getElementById("docNo").innerText;
-  let customer = document.getElementById("customerName").value;
-  let total = document.getElementById("grandTotal").innerText;
-  let payment = document.getElementById("payment").value;
+function saveDoc(){
+  let docNo=document.getElementById('docNo').innerText;
+  let customer=document.getElementById('customerName').value;
+  let total=document.getElementById('grandTotal').innerText;
+  let payment=document.getElementById('payment').value;
 
-  let data = JSON.parse(localStorage.getItem("documents") || "[]");
-  data.push({docNo, customer, total, payment});
-  localStorage.setItem("documents", JSON.stringify(data));
+  db.collection('documents').add({docNo,customer,total,payment,date:new Date()});
 
-  counter[currentType]++;
-  localStorage.setItem("docCounter", JSON.stringify(counter));
-
-  if(currentType=='invoice' && payment!='CREDIT'){
-    alert('สร้างใบเสร็จอัตโนมัติ');
-  }
+  counter++;
+  document.getElementById('docNo').innerText='INV-'+counter;
+  alert('บันทึกเรียบร้อย (เก็บออนไลน์)');
 }
 
-function loadReport() {
-  let data = JSON.parse(localStorage.getItem("documents") || "[]");
-  let table = document.getElementById("reportTable");
-  table.innerHTML = "";
-  data.forEach(d => {
-    let row = table.insertRow();
-    row.innerHTML = `<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td><td>${d.payment}</td>`;
+function loadReport(){
+  let table=document.getElementById('reportTable');
+  table.innerHTML='';
+  db.collection('documents').get().then(snapshot=>{
+    snapshot.forEach(doc=>{
+      let d=doc.data();
+      let row=table.insertRow();
+      row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td>`;
+    });
+  });
+}
+
+function searchCustomer(){
+  let name=document.getElementById('searchCustomer').value;
+  let table=document.getElementById('customerTable');
+  table.innerHTML='';
+  db.collection('documents').where('customer','==',name).get().then(snapshot=>{
+    snapshot.forEach(doc=>{
+      let d=doc.data();
+      let row=table.insertRow();
+      row.innerHTML=`<td>${d.docNo}</td><td>${d.total}</td>`;
+    });
   });
 }
 
 function loadChart(){
-  let data = JSON.parse(localStorage.getItem("documents") || "[]");
-  let totals = {};
-  data.forEach(d=>{
-    let month = new Date().getMonth()+1;
-    if(!totals[month]) totals[month]=0;
-    totals[month]+=Number(d.total);
-  });
+  db.collection('documents').get().then(snapshot=>{
+    let totals={};
+    snapshot.forEach(doc=>{
+      let d=doc.data();
+      let m=new Date(d.date.seconds*1000).getMonth()+1;
+      if(!totals[m]) totals[m]=0;
+      totals[m]+=Number(d.total);
+    });
 
-  new Chart(document.getElementById('salesChart'),{
-    type:'bar',
-    data:{
-      labels:Object.keys(totals),
-      datasets:[{label:'ยอดขาย',data:Object.values(totals)}]
-    }
-  });
-}
-
-function addUser(){
-  let u = document.getElementById('newUser').value;
-  let p = document.getElementById('newPass').value;
-  let users = JSON.parse(localStorage.getItem('users')||'[]');
-  users.push({u,p});
-  localStorage.setItem('users',JSON.stringify(users));
-  loadUsers();
-}
-
-function loadUsers(){
-  let users = JSON.parse(localStorage.getItem('users')||'[]');
-  let list = document.getElementById('userList');
-  list.innerHTML='';
-  users.forEach(x=>{
-    let li=document.createElement('li');
-    li.innerText=x.u;
-    list.appendChild(li);
-  });
-}
-
-async function generatePDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const content = document.getElementById("docArea");
-
-  await doc.html(content, {
-    callback: function (doc) {
-      doc.save("document_A4.pdf");
-    },
-    x: 10,
-    y: 10,
-    width: 190
+    new Chart(document.getElementById('salesChart'),{
+      type:'bar',
+      data:{labels:Object.keys(totals),datasets:[{label:'ยอดขาย',data:Object.values(totals)}]}
+    });
   });
 }
 </script>
