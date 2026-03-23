@@ -59,13 +59,22 @@ align-items:center;
 <button onclick="showPage('bill')">ออกเอกสาร</button>
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('billing')">ใบวางบิล</button>
-<button onclick="showPage('dashboard')">รายงานยอดขาย</button>
+<button onclick="showPage('ar')">ลูกหนี้</button>
+<button onclick="showPage('stock')">สต๊อก</button>
+<button onclick="showPage('dashboard')">ยอดขาย</button>
 </div>
 
 <!-- ================= BILL ================= -->
 <div id="billPage" class="container">
 
+<div style="text-align:center">
+<img src="logo.png" width="90"><br>
+<b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
+THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
+3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพฯ<br>
+เลขผู้เสียภาษี 0103566005842
 <h2 id="docType">ใบกำกับภาษี</h2>
+</div>
 
 <select onchange="changeType(this.value)">
 <option value="PO">ใบสั่งสินค้า (PO)</option>
@@ -91,6 +100,7 @@ align-items:center;
 
 <input id="name" placeholder="สินค้า">
 <input id="qty" placeholder="จำนวน">
+<input id="yard" placeholder="หลา">
 <input id="price" placeholder="ราคา">
 <input id="discount" placeholder="ส่วนลด">
 <button onclick="addItem()">เพิ่ม</button>
@@ -101,6 +111,7 @@ align-items:center;
 <th>ลำดับ</th>
 <th>สินค้า</th>
 <th>จำนวน</th>
+<th>หลา</th>
 <th>ส่วนลด</th>
 <th>รวม</th>
 </tr>
@@ -135,13 +146,23 @@ align-items:center;
 </div>
 </div>
 
+<!-- HISTORY -->
+<div id="historyPage" class="container" style="display:none">
+<h2>ประวัติเอกสาร</h2>
+<table>
+<thead>
+<tr><th>เลขบิล</th><th>ประเภท</th><th>ลูกค้า</th><th>ยอด</th><th>สถานะ</th></tr>
+</thead>
+<tbody id="historyTable"></tbody>
+</table>
+</div>
+
 <!-- BILLING -->
 <div id="billingPage" class="container" style="display:none">
 <h2>ใบวางบิล</h2>
 เลือกลูกค้า:
 <select id="billingCustomer"></select>
 <button onclick="loadBilling()">แสดง</button>
-
 <table>
 <thead>
 <tr>
@@ -157,52 +178,55 @@ align-items:center;
 </table>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboardPage" class="container" style="display:none">
-<h2>รายงานยอดขาย</h2>
+<!-- AR -->
+<div id="arPage" class="container" style="display:none">
+<h2>ลูกหนี้คงค้าง</h2>
+<table>
+<thead>
+<tr><th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>ครบกำหนด</th><th>สถานะ</th></tr>
+</thead>
+<tbody id="arTable"></tbody>
+</table>
+</div>
 
-ประเภท:
-<select id="filterType">
-<option value="">ทั้งหมด</option>
-<option value="PO">PO</option>
-<option value="INV">INV</option>
-<option value="RC">RC</option>
-</select>
-
-ลูกค้า:
-<select id="filterCustomer"></select>
-
-<button onclick="loadDashboard()">แสดง</button>
-
-<h3>ยอดรวม: <span id="sumSales"></span></h3>
-<h3>จำนวนบิล: <span id="countBills"></span></h3>
+<!-- STOCK -->
+<div id="stockPage" class="container" style="display:none">
+<h2>สต๊อกผ้า</h2>
+สินค้า <input id="sname">
+จำนวนหลา <input id="syard">
+<button onclick="addStock()">เพิ่มสต๊อก</button>
 
 <table>
 <thead>
-<tr><th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th></tr>
+<tr><th>สินค้า</th><th>คงเหลือ (หลา)</th></tr>
 </thead>
-<tbody id="dashTable"></tbody>
+<tbody id="stockTable"></tbody>
 </table>
+</div>
 
+<!-- DASHBOARD -->
+<div id="dashboardPage" class="container" style="display:none">
+<h2>รายงานยอดขาย</h2>
 <canvas id="chart"></canvas>
 </div>
 
 <script>
 let items=[];
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
+let stock=JSON.parse(localStorage.getItem("stock")||"[]");
 let prefix="INV";
 
-/* ===== INVOICE RUN ONLY AFTER SAVE ===== */
+/* ===== RUN NUMBER ===== */
 function getNextInvoiceNumber(){
 let key = "RUN_" + prefix;
 let num = parseInt(localStorage.getItem(key) || "1");
-return prefix + "-" + String(num).padStart(4,'0');
+return prefix+"-"+String(num).padStart(4,'0');
 }
 function runInvoiceNumber(){
 let key = "RUN_" + prefix;
 let num = parseInt(localStorage.getItem(key) || "1");
 num++;
-localStorage.setItem(key, num);
+localStorage.setItem(key,num);
 }
 invoiceNo.innerText=getNextInvoiceNumber();
 
@@ -216,22 +240,29 @@ invoiceNo.innerText=getNextInvoiceNumber();
 /* ITEM */
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
-items.push({name:name.value,qty:qty.value,total:total});
+items.push({name:name.value,qty:qty.value,yard:yard.value,total:total});
 render();
 }
 
+/* RENDER */
 function render(){
 let html="",sum=0;
 items.forEach((i,x)=>{
-html+=`<tr><td>${x+1}</td><td>${i.name}</td><td>${i.qty}</td><td>0</td><td>${i.total}</td></tr>`;
+html+=`<tr>
+<td>${x+1}</td>
+<td>${i.name}</td>
+<td>${i.qty}</td>
+<td>${i.yard}</td>
+<td>0</td>
+<td>${i.total}</td>
+</tr>`;
 sum+=i.total;
 });
 table.innerHTML=html;
 
 let vatVal = prefix==="INV"?sum*0.07:0;
 subtotal.innerText=sum.toFixed(2);
-if(prefix==="INV"){ vatRow.style.display="block"; vat.innerText=vatVal.toFixed(2); }
-else{ vatRow.style.display="none"; }
+vat.innerText=vatVal.toFixed(2);
 total.innerText=(sum+vatVal).toFixed(2);
 }
 
@@ -240,29 +271,50 @@ function openPayment(){ paymentModal.style.display="flex"; }
 
 function saveBill(method){
 let sum=items.reduce((s,i)=>s+i.total,0);
-let vatVal = prefix==="INV"?sum*0.07:0;
+let vatVal=prefix==="INV"?sum*0.07:0;
 
 let bill={
 id:invoiceNo.innerText,
+type:prefix,
 customer:customer.value,
-subtotal:sum,
-vat:vatVal,
 total:sum+vatVal,
 payment:method,
 due:due.value,
-status: method==="CREDIT"?"ค้าง":"ชำระแล้ว",
-type:prefix,
-items:JSON.parse(JSON.stringify(items))
+status:method==="CREDIT"?"ค้าง":"ชำระแล้ว",
+items:items
 };
 
 bills.push(bill);
 localStorage.setItem("bills",JSON.stringify(bills));
+
+/* ตัดสต๊อก */
+items.forEach(it=>{
+let s=stock.find(x=>x.name===it.name);
+if(s){ s.yard -= it.yard; }
+});
+
+localStorage.setItem("stock",JSON.stringify(stock));
 
 runInvoiceNumber();
 invoiceNo.innerText=getNextInvoiceNumber();
 items=[];
 render();
 paymentModal.style.display="none";
+}
+
+/* HISTORY */
+function loadHistory(){
+let html="";
+bills.forEach(b=>{
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.type}</td>
+<td>${b.customer}</td>
+<td>${b.total}</td>
+<td>${b.status}</td>
+</tr>`;
+});
+historyTable.innerHTML=html;
 }
 
 /* BILLING */
@@ -274,7 +326,6 @@ customers.forEach(c=>{
 select.innerHTML+=`<option value="${c}">${c}</option>`;
 });
 }
-
 function loadBilling(){
 let cust=document.getElementById("billingCustomer").value;
 let html="";
@@ -293,54 +344,52 @@ html+=`<tr>
 billingTable.innerHTML=html;
 }
 
-/* DASHBOARD */
-function loadCustomersFilter(){
-let select=document.getElementById("filterCustomer");
-let customers=[...new Set(bills.map(b=>b.customer))];
-select.innerHTML='<option value="">ทั้งหมด</option>';
-customers.forEach(c=>{
-select.innerHTML+=`<option value="${c}">${c}</option>`;
+/* AR */
+function loadAR(){
+let html="";
+bills.filter(b=>b.status==="ค้าง").forEach(b=>{
+html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td><td>${b.due}</td><td>${b.status}</td></tr>`;
 });
+arTable.innerHTML=html;
 }
 
-function loadDashboard(){
-let type=document.getElementById("filterType").value;
-let cust=document.getElementById("filterCustomer").value;
-
-let filtered=bills.filter(b=>{
-return (type===""||b.type===type) &&
-       (cust===""||b.customer===cust);
-});
-
-let sum=0;
-filtered.forEach(b=>sum+=b.total);
-
-sumSales.innerText=sum.toFixed(2);
-countBills.innerText=filtered.length;
-
+/* STOCK */
+function addStock(){
+stock.push({name:sname.value,yard:parseFloat(syard.value)});
+localStorage.setItem("stock",JSON.stringify(stock));
+loadStock();
+}
+function loadStock(){
 let html="";
-filtered.forEach(b=>{
-html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td></tr>`;
+stock.forEach(s=>{
+html+=`<tr><td>${s.name}</td><td>${s.yard}</td></tr>`;
 });
-dashTable.innerHTML=html;
+stockTable.innerHTML=html;
+}
 
-new Chart(document.getElementById("chart"),{
-type:"bar",
-data:{labels:filtered.map(b=>b.id),
-datasets:[{data:filtered.map(b=>b.total)}]}
-});
+/* DASHBOARD */
+function loadChart(){
+let data=bills.map(b=>b.total);
+new Chart(chart,{type:"bar",data:{labels:bills.map(b=>b.id),datasets:[{data:data}]}})
 }
 
 /* PAGE */
 function showPage(p){
 billPage.style.display="none";
+historyPage.style.display="none";
 billingPage.style.display="none";
+arPage.style.display="none";
 dashboardPage.style.display="none";
+stockPage.style.display="none";
 
 if(p==="bill") billPage.style.display="block";
+if(p==="history"){historyPage.style.display="block";loadHistory();}
 if(p==="billing"){billingPage.style.display="block";loadBillingCustomers();loadBilling();}
-if(p==="dashboard"){dashboardPage.style.display="block";loadCustomersFilter();}
+if(p==="ar"){arPage.style.display="block";loadAR();}
+if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
+if(p==="stock"){stockPage.style.display="block";loadStock();}
 }
 </script>
+
 </body>
 </html>
