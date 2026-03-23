@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Thai China ERP (Mini SeniorSoft)</title>
+<title>Thai China ERP</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -26,10 +26,20 @@ border:2px solid #d4af37;
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{border:1px solid #ddd;padding:6px;text-align:center}
 
-.summary{width:250px;margin-left:auto;border:1px solid #ddd;padding:10px;margin-top:10px}
+.summary{width:260px;margin-left:auto;border:1px solid #ddd;padding:10px}
 
-.footer{display:grid;grid-template-columns:repeat(3,1fr);margin-top:40px}
-.line{border-bottom:1px solid #000;margin-top:40px}
+.footer{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+margin-top:40px;
+}
+.signbox{
+border:1px solid #000;
+height:70px;
+text-align:center;
+padding-top:50px;
+}
 
 .modal{
 display:none;
@@ -40,6 +50,10 @@ justify-content:center;
 align-items:center;
 }
 .modal-box{background:#fff;padding:20px}
+
+@media print{
+.nav,button,input,select{display:none}
+}
 </style>
 </head>
 
@@ -48,8 +62,9 @@ align-items:center;
 <div class="nav">
 <button onclick="showPage('bill')">ออกบิล</button>
 <button onclick="showPage('history')">ประวัติ</button>
-<button onclick="showPage('dashboard')">Dashboard</button>
-<button onclick="showPage('customer')">ลูกค้า</button>
+<button onclick="showPage('ar')">ลูกหนี้</button>
+<button onclick="showPage('tax')">ภาษีขาย</button>
+<button onclick="showPage('dashboard')">ยอดขาย</button>
 </div>
 
 <!-- ================= BILL ================= -->
@@ -73,10 +88,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <div class="box">
 ลูกค้า
 <input id="customer">
-ที่อยู่
-<input id="address">
-เลขภาษี
-<input id="tax">
 </div>
 
 <div class="box">
@@ -91,13 +102,12 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <input id="qty" placeholder="จำนวน">
 <input id="price" placeholder="ราคา">
 <input id="discount" placeholder="ส่วนลด">
-
 <button onclick="addItem()">เพิ่ม</button>
 
 <table>
 <thead>
 <tr>
-<th>#</th><th>สินค้า</th><th>จำนวน</th><th>ราคา</th><th>รวม</th>
+<th>ลำดับ</th><th>สินค้า</th><th>จำนวน</th><th>ราคา</th><th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -113,9 +123,10 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <button onclick="window.print()">PDF</button>
 
 <div class="footer">
-<div>ผู้อนุมัติ<div class="line"></div></div>
-<div>ผู้รับสินค้า<div class="line"></div></div>
-<div>วันที่รับสินค้า<div class="line"></div></div>
+<div class="signbox">ผู้อนุมัติ</div>
+<div class="signbox">ผู้รับเงิน</div>
+<div class="signbox">ผู้รับสินค้า</div>
+<div class="signbox">วันที่รับสินค้า</div>
 </div>
 
 </div>
@@ -123,8 +134,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <!-- ================= HISTORY ================= -->
 <div id="historyPage" class="container" style="display:none">
 <h2>ประวัติ</h2>
-<input id="search">
-<button onclick="loadHistory()">ค้นหา</button>
 <table>
 <thead>
 <tr>
@@ -135,29 +144,43 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </table>
 </div>
 
+<!-- ================= AR ================= -->
+<div id="arPage" class="container" style="display:none">
+<h2>ลูกหนี้คงค้าง</h2>
+<table>
+<thead>
+<tr>
+<th>เลขบิล</th><th>ลูกค้า</th><th>ยอดค้าง</th><th>ครบกำหนด</th><th>สถานะ</th>
+</tr>
+</thead>
+<tbody id="arTable"></tbody>
+</table>
+</div>
+
+<!-- ================= TAX ================= -->
+<div id="taxPage" class="container" style="display:none">
+<h2>รายงานภาษีขาย</h2>
+<table>
+<thead>
+<tr>
+<th>เลขบิล</th><th>ลูกค้า</th><th>ก่อน VAT</th><th>VAT</th><th>รวม</th>
+</tr>
+</thead>
+<tbody id="taxTable"></tbody>
+</table>
+</div>
+
 <!-- ================= DASHBOARD ================= -->
 <div id="dashboardPage" class="container" style="display:none">
 <canvas id="chart"></canvas>
-</div>
-
-<!-- ================= CUSTOMER ================= -->
-<div id="customerPage" class="container" style="display:none">
-<h2>ลูกค้า</h2>
-<input id="cname" placeholder="ชื่อลูกค้า">
-<input id="caddress" placeholder="ที่อยู่">
-<input id="ctax" placeholder="เลขภาษี">
-<button onclick="addCustomer()">เพิ่มลูกค้า</button>
-
-<table>
-<tbody id="customerTable"></tbody>
-</table>
 </div>
 
 <!-- PAYMENT -->
 <div id="paymentModal" class="modal">
 <div class="modal-box">
 <button onclick="cash()">เงินสด</button>
-<button onclick="credit()">CREDIT</button>
+<button onclick="credit()">CREDIT</button><br><br>
+วันครบกำหนด:
 <input type="date" id="due">
 </div>
 </div>
@@ -166,17 +189,13 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 let items=[];
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
-let customers=JSON.parse(localStorage.getItem("customers")||"[]");
-
+let currentIndex=bills.length-1;
 let prefix="INV";
-let currentIndex=-1;
 
 /* TYPE */
 function changeType(v){
 prefix=v;
 docType.innerText=v==="INV"?"ใบกำกับภาษี":v==="RC"?"ใบเสร็จ":"ใบสั่งสินค้า";
-generateID();
-render();
 }
 
 /* ID */
@@ -184,9 +203,9 @@ function generateID(){
 let c=localStorage.getItem(prefix)||0;
 c++;
 localStorage.setItem(prefix,c);
-invoiceNo.innerText=prefix+"-"+String(c).padStart(4,'0');
+return prefix+"-"+String(c).padStart(4,'0');
 }
-generateID();
+invoiceNo.innerText=generateID();
 
 /* ITEM */
 function addItem(){
@@ -212,14 +231,12 @@ table.innerHTML=html;
 let vatVal = prefix==="INV"?sum*0.07:0;
 
 subtotal.innerText=sum.toFixed(2);
-
 if(prefix==="INV"){
 vatRow.style.display="block";
 vat.innerText=vatVal.toFixed(2);
 }else{
 vatRow.style.display="none";
 }
-
 total.innerText=(sum+vatVal).toFixed(2);
 }
 
@@ -231,14 +248,18 @@ function credit(){saveBill("CREDIT")}
 
 function saveBill(method){
 let sum=items.reduce((s,i)=>s+i.total,0);
-let vatVal = prefix==="INV"?sum*0.07:0;
+let vatVal=prefix==="INV"?sum*0.07:0;
 
 let bill={
 id:invoiceNo.innerText,
 customer:customer.value,
+subtotal:sum,
+vat:vatVal,
 total:sum+vatVal,
 payment:method,
-status:"active",
+due:due.value,
+status: method==="CREDIT"?"ค้าง":"ชำระแล้ว",
+type:prefix,
 items:items
 };
 
@@ -250,7 +271,7 @@ paymentModal.style.display="none";
 alert("บันทึกแล้ว");
 }
 
-/* NAV */
+/* NAV BILL */
 function prevBill(){
 if(currentIndex>0){
 currentIndex--;
@@ -261,7 +282,7 @@ loadBill();
 function nextBill(){
 items=[];
 customer.value="";
-generateID();
+invoiceNo.innerText=generateID();
 render();
 }
 
@@ -287,46 +308,62 @@ html+=`<tr>
 historyTable.innerHTML=html;
 }
 
+/* AR */
+function loadAR(){
+let html="";
+bills.filter(b=>b.status==="ค้าง").forEach(b=>{
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.customer}</td>
+<td>${b.total}</td>
+<td>${b.due}</td>
+<td>${b.status}</td>
+</tr>`;
+});
+arTable.innerHTML=html;
+}
+
+/* TAX */
+function loadTax(){
+let html="";
+bills.filter(b=>b.type==="INV").forEach(b=>{
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.customer}</td>
+<td>${b.subtotal}</td>
+<td>${b.vat}</td>
+<td>${b.total}</td>
+</tr>`;
+});
+taxTable.innerHTML=html;
+}
+
 /* DASHBOARD */
 function loadChart(){
-let data=bills.map(b=>b.total);
+let months={};
+bills.forEach(b=>{
+let m=b.id.substring(4,6);
+months[m]=(months[m]||0)+b.total;
+});
 new Chart(chart,{
 type:"bar",
-data:{labels:bills.map(b=>b.id),datasets:[{data:data}]}
+data:{labels:Object.keys(months),datasets:[{data:Object.values(months)}]}
 });
 }
-
-/* CUSTOMER */
-function addCustomer(){
-customers.push({
-name:cname.value,
-address:caddress.value,
-tax:ctax.value
-});
-localStorage.setItem("customers",JSON.stringify(customers));
-loadCustomers();
-}
-
-function loadCustomers(){
-let html="";
-customers.forEach(c=>{
-html+=`<tr><td>${c.name}</td><td>${c.address}</td></tr>`;
-});
-customerTable.innerHTML=html;
-}
-loadCustomers();
 
 /* PAGE */
 function showPage(p){
 billPage.style.display="none";
 historyPage.style.display="none";
 dashboardPage.style.display="none";
-customerPage.style.display="none";
+arPage.style.display="none";
+taxPage.style.display="none";
 
 if(p==="bill") billPage.style.display="block";
 if(p==="history"){historyPage.style.display="block";loadHistory();}
 if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
-if(p==="customer") customerPage.style.display="block";
+if(p==="ar"){arPage.style.display="block";loadAR();}
+if(p==="tax"){taxPage.style.display="block";loadTax();}
 }
 
 </script>
