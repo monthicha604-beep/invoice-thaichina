@@ -5,45 +5,33 @@
   <title>THAI CHINA FABRIC ERP PRO</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', Arial; margin: 0; background:#eef1f7; }
     .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:15px; flex-wrap:wrap; }
     .menu button { background:none; border:none; color:white; font-size:14px; cursor:pointer; }
     .container { padding:20px; }
-    .box { background:white; padding:20px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    .header { display:flex; justify-content:space-between; align-items:center; }
+    .box { background:white; padding:25px; border-radius:12px; box-shadow:0 0 15px rgba(0,0,0,0.08); }
+    .header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #1f2a44; padding-bottom:10px; }
     table { width:100%; border-collapse: collapse; margin-top:15px; }
-    table, th, td { border:1px solid #ddd; }
-    th { background:#f0f3fa; }
-    th, td { padding:6px; text-align:center; }
-    input { width:100%; padding:5px; margin:3px 0; }
-    .right { text-align:right; }
-    .btn { padding:6px 12px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#1f2a44; color:white; }
-    .logo { width:100px; }
+    table, th, td { border:1px solid #ccc; }
+    th { background:#1f2a44; color:white; }
+    th, td { padding:8px; text-align:center; }
+    input, select { width:100%; padding:5px; margin:3px 0; border:1px solid #ddd; border-radius:4px; }
+    .right { text-align:right; margin-top:10px; }
+    .btn { padding:8px 14px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#1f2a44; color:white; }
+    .logo { width:120px; }
+    .title { text-align:center; font-size:22px; font-weight:bold; margin-top:10px; }
   </style>
 </head>
 <body>
 
-<div id="loginPage" class="container">
-  <div class="box">
-    <h2>Login</h2>
-    <input type="text" id="user" placeholder="Username">
-    <input type="password" id="pass" placeholder="Password">
-    <button class="btn" onclick="login()">Login</button>
-  </div>
-</div>
-
-<div id="mainPage" style="display:none">
 <div class="menu">
-  <button onclick="openDoc('quotation')">ใบเสนอราคา</button>
   <button onclick="openDoc('invoice')">ใบแจ้งหนี้</button>
-  <button onclick="openDoc('tax')">ใบกำกับภาษี</button>
   <button onclick="openDoc('receipt')">ใบเสร็จ</button>
-  <button onclick="openDoc('delivery')">ใบส่งของ</button>
-  <button onclick="openDoc('purchase')">ใบสั่งซื้อ</button>
+  <button onclick="showPage('dashboard')">Dashboard</button>
   <button onclick="showPage('report')">รายงาน</button>
-  <button onclick="showPage('profit')">สรุปกำไร</button>
-  <button onclick="exportExcel()">Export Excel</button>
+  <button onclick="showPage('users')">ผู้ใช้</button>
 </div>
 
 <div class="container">
@@ -54,24 +42,25 @@
           <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
           เลขผู้เสียภาษี 0103566005842
         </div>
-        <img src="logo.png" class="logo">
+        <div>
+          <img src="logo.png" class="logo"><br>
+          <img src="signature.png" style="width:120px;">
+        </div>
       </div>
 
-      <h2 id="docTitle" style="text-align:center"></h2>
+      <div class="title" id="docTitle"></div>
       เลขที่เอกสาร: <b id="docNo"></b>
 
       <h3>ข้อมูลลูกค้า</h3>
       <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
-      <input type="text" id="customerAddress" placeholder="ที่อยู่">
-      <input type="text" id="customerTax" placeholder="เลขผู้เสียภาษี">
       <input type="date" id="date">
 
       <table id="itemTable">
         <thead>
           <tr>
+            <th>ลำดับ</th>
             <th>รายการ</th>
             <th>จำนวน</th>
-            <th>ต้นทุน</th>
             <th>ราคา</th>
             <th>รวม</th>
           </tr>
@@ -82,80 +71,79 @@
       <button class="btn" onclick="addRow()">+ เพิ่มรายการ</button>
 
       <div class="right">
-        ส่วนลด: <input type="number" id="discount" value="0" oninput="calculate()"><br>
-        VAT 7%: <span id="vat">0</span><br>
-        รวมสุทธิ: <span id="grandTotal">0</span>
+        วิธีชำระเงิน:
+        <select id="payment">
+          <option>เงินสด</option>
+          <option>โอน</option>
+          <option>CREDIT</option>
+        </select>
+        <br>
+        รวม: <span id="grandTotal">0</span>
       </div>
-
-      <br>
-      ลายเซ็น: ______________________
     </div>
 
     <button class="btn" onclick="saveDoc()">บันทึก</button>
     <button class="btn" onclick="generatePDF()">PDF</button>
-    <button class="btn" onclick="window.print()">พิมพ์</button>
+  </div>
+
+  <div id="dashboard" class="box" style="display:none">
+    <h2>Dashboard ยอดขาย</h2>
+    <canvas id="salesChart"></canvas>
   </div>
 
   <div id="report" class="box" style="display:none">
     <h2>รายงาน</h2>
     <table>
-      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th><th>ประเภท</th></tr></thead>
+      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th><th>ชำระ</th></tr></thead>
       <tbody id="reportTable"></tbody>
     </table>
   </div>
 
-  <div id="profit" class="box" style="display:none">
-    <h2>สรุปกำไร</h2>
-    กำไรรวม: <span id="profitTotal">0</span>
+  <div id="users" class="box" style="display:none">
+    <h2>ผู้ใช้</h2>
+    <input type="text" id="newUser" placeholder="Username">
+    <input type="password" id="newPass" placeholder="Password">
+    <button class="btn" onclick="addUser()">เพิ่มผู้ใช้</button>
+    <ul id="userList"></ul>
   </div>
-</div>
 </div>
 
 <script>
-function login(){
-  if(document.getElementById('user').value=='admin' && document.getElementById('pass').value=='1234'){
-    document.getElementById('loginPage').style.display='none';
-    document.getElementById('mainPage').style.display='block';
-  }else alert('รหัสผิด');
-}
-
 let counter = JSON.parse(localStorage.getItem("docCounter") || "{}");
 let currentType = "invoice";
+
+function formatDocNo(type){
+  let year = new Date().getFullYear();
+  if(!counter[type]) counter[type]=1;
+  return type.toUpperCase()+"-"+year+"-"+String(counter[type]).padStart(3,'0');
+}
 
 function openDoc(type) {
   showPage('documentPage');
   currentType = type;
-
-  if (!counter[type]) counter[type] = 1;
-  document.getElementById("docNo").innerText = type.toUpperCase() + counter[type];
-
-  const titles = {
-    quotation:'ใบเสนอราคา',
-    invoice:'ใบแจ้งหนี้',
-    tax:'ใบกำกับภาษี',
-    receipt:'ใบเสร็จรับเงิน',
-    delivery:'ใบส่งของ',
-    purchase:'ใบสั่งซื้อ'
-  };
-  document.getElementById("docTitle").innerText = titles[type];
+  document.getElementById("docNo").innerText = formatDocNo(type);
+  document.getElementById("docTitle").innerText = type=='invoice'?'ใบแจ้งหนี้':'ใบเสร็จรับเงิน';
 }
 
 function showPage(page) {
   document.getElementById('documentPage').style.display='none';
+  document.getElementById('dashboard').style.display='none';
   document.getElementById('report').style.display='none';
-  document.getElementById('profit').style.display='none';
+  document.getElementById('users').style.display='none';
   document.getElementById(page).style.display='block';
   loadReport();
-  loadProfit();
+  loadChart();
+  loadUsers();
 }
 
 function addRow() {
   let table = document.querySelector("#itemTable tbody");
+  let rowCount = table.rows.length + 1;
   let row = table.insertRow();
   row.innerHTML = `
+    <td>${rowCount}</td>
     <td><input type="text"></td>
     <td><input type="number" class="qty" oninput="calculate()"></td>
-    <td><input type="number" class="cost" oninput="calculate()"></td>
     <td><input type="number" class="price" oninput="calculate()"></td>
     <td class="total">0</td>
   `;
@@ -166,7 +154,6 @@ function calculate() {
   let qty = document.querySelectorAll(".qty");
   let price = document.querySelectorAll(".price");
   let total = document.querySelectorAll(".total");
-  let discount = document.getElementById("discount").value || 0;
   let sumTotal = 0;
 
   for (let i = 0; i < qty.length; i++) {
@@ -174,35 +161,25 @@ function calculate() {
     total[i].innerText = sum.toFixed(2);
     sumTotal += sum;
   }
-
-  let vat = (sumTotal - discount) * 0.07;
-  let grand = (sumTotal - discount) + vat;
-
-  document.getElementById("vat").innerText = vat.toFixed(2);
-  document.getElementById("grandTotal").innerText = grand.toFixed(2);
+  document.getElementById("grandTotal").innerText = sumTotal.toFixed(2);
 }
 
 function saveDoc() {
   let docNo = document.getElementById("docNo").innerText;
   let customer = document.getElementById("customerName").value;
   let total = document.getElementById("grandTotal").innerText;
-
-  let costEls = document.querySelectorAll('.cost');
-  let priceEls = document.querySelectorAll('.price');
-  let qtyEls = document.querySelectorAll('.qty');
-  let profit = 0;
-  for(let i=0;i<costEls.length;i++){
-    profit += ((priceEls[i].value||0)-(costEls[i].value||0))*(qtyEls[i].value||0);
-  }
+  let payment = document.getElementById("payment").value;
 
   let data = JSON.parse(localStorage.getItem("documents") || "[]");
-  data.push({docNo, customer, total, type: currentType, profit});
+  data.push({docNo, customer, total, payment});
   localStorage.setItem("documents", JSON.stringify(data));
 
   counter[currentType]++;
   localStorage.setItem("docCounter", JSON.stringify(counter));
 
-  alert("บันทึกเรียบร้อย เลขที่บิลจะรันเมื่อบันทึกเท่านั้น");
+  if(currentType=='invoice' && payment!='CREDIT'){
+    alert('สร้างใบเสร็จอัตโนมัติ');
+  }
 }
 
 function loadReport() {
@@ -211,36 +188,60 @@ function loadReport() {
   table.innerHTML = "";
   data.forEach(d => {
     let row = table.insertRow();
-    row.innerHTML = `<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td><td>${d.type}</td>`;
+    row.innerHTML = `<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td><td>${d.payment}</td>`;
   });
 }
 
-function loadProfit(){
+function loadChart(){
   let data = JSON.parse(localStorage.getItem("documents") || "[]");
-  let total=0;
-  data.forEach(d=> total+=Number(d.profit||0));
-  document.getElementById('profitTotal').innerText = total.toFixed(2);
+  let totals = {};
+  data.forEach(d=>{
+    let month = new Date().getMonth()+1;
+    if(!totals[month]) totals[month]=0;
+    totals[month]+=Number(d.total);
+  });
+
+  new Chart(document.getElementById('salesChart'),{
+    type:'bar',
+    data:{
+      labels:Object.keys(totals),
+      datasets:[{label:'ยอดขาย',data:Object.values(totals)}]
+    }
+  });
 }
 
-function exportExcel(){
-  let data = JSON.parse(localStorage.getItem("documents") || "[]");
-  let ws = XLSX.utils.json_to_sheet(data);
-  let wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Report");
-  XLSX.writeFile(wb, "report.xlsx");
+function addUser(){
+  let u = document.getElementById('newUser').value;
+  let p = document.getElementById('newPass').value;
+  let users = JSON.parse(localStorage.getItem('users')||'[]');
+  users.push({u,p});
+  localStorage.setItem('users',JSON.stringify(users));
+  loadUsers();
+}
+
+function loadUsers(){
+  let users = JSON.parse(localStorage.getItem('users')||'[]');
+  let list = document.getElementById('userList');
+  list.innerHTML='';
+  users.forEach(x=>{
+    let li=document.createElement('li');
+    li.innerText=x.u;
+    list.appendChild(li);
+  });
 }
 
 async function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'mm', 'a4');
-  const invoice = document.getElementById("docArea");
+  const content = document.getElementById("docArea");
 
-  await doc.html(invoice, {
+  await doc.html(content, {
     callback: function (doc) {
-      doc.save("document.pdf");
+      doc.save("document_A4.pdf");
     },
     x: 10,
-    y: 10
+    y: 10,
+    width: 190
   });
 }
 </script>
