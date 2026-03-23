@@ -1,489 +1,247 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>THAI CHINA ERP</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body{
-  font-family:'Sarabun';
-  margin:0;
-  background:#eef2f7;
-}
-
-/* A4 */
-.container{
-  width:190mm;
-  min-height:277mm;
-  background:#fff;
-  margin:10px auto;
-  padding:10mm;
-  border:2px solid #d4af37;
-  position:relative;
-}
-
-/* ลายน้ำ */
-.container::after{
-  content:"";
-  position:absolute;
-  top:35%;
-  left:25%;
-  width:300px;
-  height:300px;
-  background:url('logo.png') no-repeat center;
-  background-size:contain;
-  opacity:0.06;
-  z-index:0;
-}
-
-/* ให้เนื้อหาอยู่ด้านบนลายน้ำ */
-.container *{
-  position:relative;
-  z-index:1;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-  font-size:12px;
-}
-
-th,td{
-  border:1px solid #ccc;
-  padding:5px;
-  text-align:center;
-}
-
-/* ส่วนสรุป */
-.summary{
-  width:250px;
-  margin-left:auto;
-  border:1px solid #ccc;
-  padding:10px;
-  margin-top:10px;
-}
-
-/* ลายเซ็น */
-.footer{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-top:30px;
-}
-.signbox{
-  border:1px solid #000;
-  height:70px;
-  text-align:center;
-  padding-top:50px;
-}
-
-/* PRINT */
-@page {
-  size:A4;
-  margin:10mm;
-}
-
-@media print{
-  body{background:white;}
-  .nav, button, input, select{
-    display:none;
-  }
-  .container{
-    width:190mm;
-    min-height:277mm;
-    margin:0;
-    border:2px solid #d4af37;
-  }
-  table {
-  page-break-inside:auto;
-}
-tr {
-  page-break-inside:avoid;
-  page-break-after:auto;
-}
-}
-
-@media print {
-  body {
-    background: white;
-  }
-
-  .nav, button, input, select {
-    display: none;
-  }
-
-  .container {
-    width: 210mm;
-    min-height: 297mm;
-    border: 2px solid #d4af37;
-    padding: 10mm;
-    margin: 0;
-  }
-
-  table {
-    font-size: 12px;
-  }
-}>
-  
+  <meta charset="UTF-8" />
+  <title>THAI CHINA FABRIC ERP PRO</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Arial; margin: 0; background:#eef1f7; }
+    .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:15px; flex-wrap:wrap; }
+    .menu button { background:none; border:none; color:white; font-size:14px; cursor:pointer; }
+    .container { padding:20px; }
+    .box { background:white; padding:20px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .header { display:flex; justify-content:space-between; align-items:center; }
+    table { width:100%; border-collapse: collapse; margin-top:15px; }
+    table, th, td { border:1px solid #ddd; }
+    th { background:#f0f3fa; }
+    th, td { padding:6px; text-align:center; }
+    input { width:100%; padding:5px; margin:3px 0; }
+    .right { text-align:right; }
+    .btn { padding:6px 12px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#1f2a44; color:white; }
+    .logo { width:100px; }
+  </style>
 </head>
-
 <body>
 
-<div class="nav">
-<button onclick="showPage('bill')">ออกเอกสาร</button>
-<button onclick="showPage('history')">ประวัติ</button>
-<button onclick="showPage('billing')">ใบวางบิล</button>
-<button onclick="showPage('ar')">ลูกหนี้</button>
-<button onclick="showPage('stock')">สต๊อก</button>
-<button onclick="showPage('dashboard')">ยอดขาย</button>
+<div id="loginPage" class="container">
+  <div class="box">
+    <h2>Login</h2>
+    <input type="text" id="user" placeholder="Username">
+    <input type="password" id="pass" placeholder="Password">
+    <button class="btn" onclick="login()">Login</button>
+  </div>
 </div>
 
-<!-- ================= BILL ================= -->
-<div id="billPage" class="container">
-
-<div style="text-align:center">
-<img src="logo.png" width="90"><br>
-<b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
-3178 ซอยเอกชัย 109 แขวงบางบอนใต้ เขตบางบอน กรุงเทพฯ<br>
-เลขผู้เสียภาษี 0103566005842
-<h2 id="docType">ใบกำกับภาษี</h2>
+<div id="mainPage" style="display:none">
+<div class="menu">
+  <button onclick="openDoc('quotation')">ใบเสนอราคา</button>
+  <button onclick="openDoc('invoice')">ใบแจ้งหนี้</button>
+  <button onclick="openDoc('tax')">ใบกำกับภาษี</button>
+  <button onclick="openDoc('receipt')">ใบเสร็จ</button>
+  <button onclick="openDoc('delivery')">ใบส่งของ</button>
+  <button onclick="openDoc('purchase')">ใบสั่งซื้อ</button>
+  <button onclick="showPage('report')">รายงาน</button>
+  <button onclick="showPage('profit')">สรุปกำไร</button>
+  <button onclick="exportExcel()">Export Excel</button>
 </div>
 
-<select onchange="changeType(this.value)">
-<option value="PO">ใบสั่งสินค้า (PO)</option>
-<option value="INV">ใบกำกับภาษี (INV)</option>
-<option value="RC">ใบเสร็จ (RC)</option>
-</select>
+<div class="container">
+  <div id="documentPage" class="box">
+    <div id="docArea">
+      <div class="header">
+        <div>
+          <b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
+          เลขผู้เสียภาษี 0103566005842
+        </div>
+        <img src="logo.png" class="logo">
+      </div>
 
-<div class="header">
-<div class="box">
-ลูกค้า
-<input id="customer">
-ที่อยู่
-<input id="address">
-เลขผู้เสียภาษี
-<input id="taxid">
+      <h2 id="docTitle" style="text-align:center"></h2>
+      เลขที่เอกสาร: <b id="docNo"></b>
+
+      <h3>ข้อมูลลูกค้า</h3>
+      <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
+      <input type="text" id="customerAddress" placeholder="ที่อยู่">
+      <input type="text" id="customerTax" placeholder="เลขผู้เสียภาษี">
+      <input type="date" id="date">
+
+      <table id="itemTable">
+        <thead>
+          <tr>
+            <th>รายการ</th>
+            <th>จำนวน</th>
+            <th>ต้นทุน</th>
+            <th>ราคา</th>
+            <th>รวม</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <button class="btn" onclick="addRow()">+ เพิ่มรายการ</button>
+
+      <div class="right">
+        ส่วนลด: <input type="number" id="discount" value="0" oninput="calculate()"><br>
+        VAT 7%: <span id="vat">0</span><br>
+        รวมสุทธิ: <span id="grandTotal">0</span>
+      </div>
+
+      <br>
+      ลายเซ็น: ______________________
+    </div>
+
+    <button class="btn" onclick="saveDoc()">บันทึก</button>
+    <button class="btn" onclick="generatePDF()">PDF</button>
+    <button class="btn" onclick="window.print()">พิมพ์</button>
+  </div>
+
+  <div id="report" class="box" style="display:none">
+    <h2>รายงาน</h2>
+    <table>
+      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th><th>ประเภท</th></tr></thead>
+      <tbody id="reportTable"></tbody>
+    </table>
+  </div>
+
+  <div id="profit" class="box" style="display:none">
+    <h2>สรุปกำไร</h2>
+    กำไรรวม: <span id="profitTotal">0</span>
+  </div>
 </div>
-
-<div class="box">
-เลขที่: <span id="invoiceNo"></span><br>
-วันที่: <input type="date" id="date">
-</div>
-</div>
-
-<input id="name" placeholder="สินค้า">
-<input id="qty" placeholder="จำนวน">
-<input id="yard" placeholder="หลา">
-<input id="price" placeholder="ราคา">
-<input id="discount" placeholder="ส่วนลด">
-<button onclick="addItem()">เพิ่ม</button>
-
-<table>
-<thead>
-<tr>
-<th>ลำดับ</th>
-<th>สินค้า</th>
-<th>จำนวน</th>
-<th>หลา</th>
-<th>ส่วนลด</th>
-<th>รวม</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
-</table>
-
-<div class="summary">
-<p>Subtotal: <span id="subtotal"></span></p>
-<p id="vatRow">VAT: <span id="vat"></span></p>
-<p>Total: <span id="total"></span></p>
-</div>
-
-<button onclick="openPayment()">บันทึก</button>
-<button onclick="savePDF()">บันทึก PDF</button>
-
-<div class="footer">
-<div class="signbox">ผู้อนุมัติ</div>
-<div class="signbox">ผู้รับเงิน</div>
-<div class="signbox">ผู้รับสินค้า</div>
-<div class="signbox">วันที่รับสินค้า</div>
-</div>
-
-</div>
-
-<!-- PAYMENT -->
-<div id="paymentModal" class="modal">
-<div class="modal-box">
-<button onclick="saveBill('เงินสด')">เงินสด</button>
-<button onclick="saveBill('CREDIT')">CREDIT</button><br><br>
-วันครบกำหนด:
-<input type="date" id="due">
-</div>
-</div>
-
-<!-- HISTORY -->
-<div id="historyPage" class="container" style="display:none">
-<h2>ประวัติเอกสาร</h2>
-<table>
-<thead>
-<tr><th>เลขบิล</th><th>ประเภท</th><th>ลูกค้า</th><th>ยอด</th><th>สถานะ</th></tr>
-</thead>
-<tbody id="historyTable"></tbody>
-</table>
-</div>
-
-<!-- BILLING -->
-<div id="billingPage" class="container" style="display:none">
-<h2>ใบวางบิล</h2>
-เลือกลูกค้า:
-<select id="billingCustomer"></select>
-<button onclick="loadBilling()">แสดง</button>
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th>
-<th>สินค้า</th>
-<th>จำนวน</th>
-<th>ยอด</th>
-<th>ครบกำหนด</th>
-<th>สถานะ</th>
-</tr>
-</thead>
-<tbody id="billingTable"></tbody>
-</table>
-</div>
-
-<!-- AR -->
-<div id="arPage" class="container" style="display:none">
-<h2>ลูกหนี้คงค้าง</h2>
-<table>
-<thead>
-<tr><th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>ครบกำหนด</th><th>สถานะ</th></tr>
-</thead>
-<tbody id="arTable"></tbody>
-</table>
-</div>
-  
-  .container {
-  position: relative;
-}
-
-.container::before {
-  content: "";
-  position: absolute;
-  top: 35%;
-  left: 25%;
-  width: 300px;
-  height: 300px;
-  background: url('logo.png') no-repeat center;
-  background-size: contain;
-  opacity: 0.05;
-}
-
-<!-- STOCK -->
-<div id="stockPage" class="container" style="display:none">
-<h2>สต๊อกผ้า</h2>
-สินค้า <input id="sname">
-จำนวนหลา <input id="syard">
-<button onclick="addStock()">เพิ่มสต๊อก</button>
-
-<table>
-<thead>
-<tr><th>สินค้า</th><th>คงเหลือ (หลา)</th></tr>
-</thead>
-<tbody id="stockTable"></tbody>
-</table>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboardPage" class="container" style="display:none">
-<h2>รายงานยอดขาย</h2>
-<canvas id="chart"></canvas>
 </div>
 
 <script>
-let items=[];
-let bills=JSON.parse(localStorage.getItem("bills")||"[]");
-let stock=JSON.parse(localStorage.getItem("stock")||"[]");
-let prefix="INV";
-
-/* ===== RUN NUMBER ===== */
-function getNextInvoiceNumber(){
-let key = "RUN_" + prefix;
-let num = parseInt(localStorage.getItem(key) || "1");
-return prefix+"-"+String(num).padStart(4,'0');
-}
-function runInvoiceNumber(){
-let key = "RUN_" + prefix;
-let num = parseInt(localStorage.getItem(key) || "1");
-num++;
-localStorage.setItem(key,num);
-}
-invoiceNo.innerText=getNextInvoiceNumber();
-
-/* TYPE */
-function changeType(v){
-prefix=v;
-docType.innerText=v;
-invoiceNo.innerText=getNextInvoiceNumber();
+function login(){
+  if(document.getElementById('user').value=='admin' && document.getElementById('pass').value=='1234'){
+    document.getElementById('loginPage').style.display='none';
+    document.getElementById('mainPage').style.display='block';
+  }else alert('รหัสผิด');
 }
 
-/* ITEM */
-function addItem(){
-let total=(qty.value*price.value)-discount.value;
-items.push({name:name.value,qty:qty.value,yard:yard.value,total:total});
-render();
+let counter = JSON.parse(localStorage.getItem("docCounter") || "{}");
+let currentType = "invoice";
+
+function openDoc(type) {
+  showPage('documentPage');
+  currentType = type;
+
+  if (!counter[type]) counter[type] = 1;
+  document.getElementById("docNo").innerText = type.toUpperCase() + counter[type];
+
+  const titles = {
+    quotation:'ใบเสนอราคา',
+    invoice:'ใบแจ้งหนี้',
+    tax:'ใบกำกับภาษี',
+    receipt:'ใบเสร็จรับเงิน',
+    delivery:'ใบส่งของ',
+    purchase:'ใบสั่งซื้อ'
+  };
+  document.getElementById("docTitle").innerText = titles[type];
 }
 
-/* RENDER */
-function render(){
-let html="",sum=0;
-items.forEach((i,x)=>{
-html+=`<tr>
-<td>${x+1}</td>
-<td>${i.name}</td>
-<td>${i.qty}</td>
-<td>${i.yard}</td>
-<td>0</td>
-<td>${i.total}</td>
-</tr>`;
-sum+=i.total;
-});
-table.innerHTML=html;
-
-let vatVal = prefix==="INV"?sum*0.07:0;
-subtotal.innerText=sum.toFixed(2);
-vat.innerText=vatVal.toFixed(2);
-total.innerText=(sum+vatVal).toFixed(2);
+function showPage(page) {
+  document.getElementById('documentPage').style.display='none';
+  document.getElementById('report').style.display='none';
+  document.getElementById('profit').style.display='none';
+  document.getElementById(page).style.display='block';
+  loadReport();
+  loadProfit();
 }
 
-/* SAVE */
-function openPayment(){ paymentModal.style.display="flex"; }
+function addRow() {
+  let table = document.querySelector("#itemTable tbody");
+  let row = table.insertRow();
+  row.innerHTML = `
+    <td><input type="text"></td>
+    <td><input type="number" class="qty" oninput="calculate()"></td>
+    <td><input type="number" class="cost" oninput="calculate()"></td>
+    <td><input type="number" class="price" oninput="calculate()"></td>
+    <td class="total">0</td>
+  `;
+}
+addRow();
 
-function saveBill(method){
-let sum=items.reduce((s,i)=>s+i.total,0);
-let vatVal=prefix==="INV"?sum*0.07:0;
+function calculate() {
+  let qty = document.querySelectorAll(".qty");
+  let price = document.querySelectorAll(".price");
+  let total = document.querySelectorAll(".total");
+  let discount = document.getElementById("discount").value || 0;
+  let sumTotal = 0;
 
-let bill={
-id:invoiceNo.innerText,
-type:prefix,
-customer:customer.value,
-total:sum+vatVal,
-payment:method,
-due:due.value,
-status:method==="CREDIT"?"ค้าง":"ชำระแล้ว",
-items:items
-};
-bills.push(bill);
-localStorage.setItem("bills",JSON.stringify(bills));
-  function savePDF(){
-    window.print();
+  for (let i = 0; i < qty.length; i++) {
+    let sum = (qty[i].value || 0) * (price[i].value || 0);
+    total[i].innerText = sum.toFixed(2);
+    sumTotal += sum;
+  }
+
+  let vat = (sumTotal - discount) * 0.07;
+  let grand = (sumTotal - discount) + vat;
+
+  document.getElementById("vat").innerText = vat.toFixed(2);
+  document.getElementById("grandTotal").innerText = grand.toFixed(2);
 }
 
-/* ตัดสต๊อก */
-items.forEach(it=>{
-let s=stock.find(x=>x.name===it.name);
-if(s){ s.yard -= it.yard; }
-});
+function saveDoc() {
+  let docNo = document.getElementById("docNo").innerText;
+  let customer = document.getElementById("customerName").value;
+  let total = document.getElementById("grandTotal").innerText;
 
-localStorage.setItem("stock",JSON.stringify(stock));
+  let costEls = document.querySelectorAll('.cost');
+  let priceEls = document.querySelectorAll('.price');
+  let qtyEls = document.querySelectorAll('.qty');
+  let profit = 0;
+  for(let i=0;i<costEls.length;i++){
+    profit += ((priceEls[i].value||0)-(costEls[i].value||0))*(qtyEls[i].value||0);
+  }
 
-runInvoiceNumber();
-invoiceNo.innerText=getNextInvoiceNumber();
-items=[];
-render();
-paymentModal.style.display="none";
+  let data = JSON.parse(localStorage.getItem("documents") || "[]");
+  data.push({docNo, customer, total, type: currentType, profit});
+  localStorage.setItem("documents", JSON.stringify(data));
+
+  counter[currentType]++;
+  localStorage.setItem("docCounter", JSON.stringify(counter));
+
+  alert("บันทึกเรียบร้อย เลขที่บิลจะรันเมื่อบันทึกเท่านั้น");
 }
 
-/* HISTORY */
-function loadHistory(){
-let html="";
-bills.forEach(b=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.type}</td>
-<td>${b.customer}</td>
-<td>${b.total}</td>
-<td>${b.status}</td>
-</tr>`;
-});
-historyTable.innerHTML=html;
+function loadReport() {
+  let data = JSON.parse(localStorage.getItem("documents") || "[]");
+  let table = document.getElementById("reportTable");
+  table.innerHTML = "";
+  data.forEach(d => {
+    let row = table.insertRow();
+    row.innerHTML = `<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td><td>${d.type}</td>`;
+  });
 }
 
-/* BILLING */
-function loadBillingCustomers(){
-let select=document.getElementById("billingCustomer");
-let customers=[...new Set(bills.map(b=>b.customer))];
-select.innerHTML='<option value="">ทั้งหมด</option>';
-customers.forEach(c=>{
-select.innerHTML+=`<option value="${c}">${c}</option>`;
-});
-}
-function loadBilling(){
-let cust=document.getElementById("billingCustomer").value;
-let html="";
-bills.filter(b=>b.payment==="CREDIT" && (cust===""||b.customer===cust)).forEach(b=>{
-let itemsText=b.items.map(i=>i.name).join("<br>");
-let qtyText=b.items.map(i=>i.qty).join("<br>");
-html+=`<tr>
-<td>${b.id}</td>
-<td>${itemsText}</td>
-<td>${qtyText}</td>
-<td>${b.total}</td>
-<td>${b.due}</td>
-<td>${b.status}</td>
-</tr>`;
-});
-billingTable.innerHTML=html;
+function loadProfit(){
+  let data = JSON.parse(localStorage.getItem("documents") || "[]");
+  let total=0;
+  data.forEach(d=> total+=Number(d.profit||0));
+  document.getElementById('profitTotal').innerText = total.toFixed(2);
 }
 
-/* AR */
-function loadAR(){
-let html="";
-bills.filter(b=>b.status==="ค้าง").forEach(b=>{
-html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td><td>${b.due}</td><td>${b.status}</td></tr>`;
-});
-arTable.innerHTML=html;
+function exportExcel(){
+  let data = JSON.parse(localStorage.getItem("documents") || "[]");
+  let ws = XLSX.utils.json_to_sheet(data);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Report");
+  XLSX.writeFile(wb, "report.xlsx");
 }
 
-/* STOCK */
-function addStock(){
-stock.push({name:sname.value,yard:parseFloat(syard.value)});
-localStorage.setItem("stock",JSON.stringify(stock));
-loadStock();
-}
-function loadStock(){
-let html="";
-stock.forEach(s=>{
-html+=`<tr><td>${s.name}</td><td>${s.yard}</td></tr>`;
-});
-stockTable.innerHTML=html;
-}
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const invoice = document.getElementById("docArea");
 
-/* DASHBOARD */
-function loadChart(){
-let data=bills.map(b=>b.total);
-new Chart(chart,{type:"bar",data:{labels:bills.map(b=>b.id),datasets:[{data:data}]}})
-}
-
-/* PAGE */
-function showPage(p){
-billPage.style.display="none";
-historyPage.style.display="none";
-billingPage.style.display="none";
-arPage.style.display="none";
-dashboardPage.style.display="none";
-stockPage.style.display="none";
-
-if(p==="bill") billPage.style.display="block";
-if(p==="history"){historyPage.style.display="block";loadHistory();}
-if(p==="billing"){billingPage.style.display="block";loadBillingCustomers();loadBilling();}
-if(p==="ar"){arPage.style.display="block";loadAR();}
-if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
-if(p==="stock"){stockPage.style.display="block";loadStock();}
+  await doc.html(invoice, {
+    callback: function (doc) {
+      doc.save("document.pdf");
+    },
+    x: 10,
+    y: 10
+  });
 }
 </script>
 
