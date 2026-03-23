@@ -2,100 +2,128 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>THAI CHINA FABRIC CLOUD ERP</title>
+  <title>THAI CHINA FABRIC - ERP SYSTEM</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body { font-family: 'Segoe UI'; margin:0; background:#eef1f7; }
-    .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:10px; flex-wrap:wrap; }
-    .menu button { background:none; border:none; color:white; cursor:pointer; }
+    body { font-family: Tahoma, Arial; margin:0; background:#f0f2f5; }
+    .topbar { background:#1f2a44; color:white; padding:12px; font-size:14px; }
+    .topbar button { background:none; border:none; color:white; margin-right:15px; cursor:pointer; }
     .container { padding:20px; }
-    .box { background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .card { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.08); }
+    .header { display:flex; justify-content:space-between; align-items:center; }
+    .logo { height:70px; }
     table { width:100%; border-collapse: collapse; margin-top:10px; }
-    table, th, td { border:1px solid #ccc; }
-    th { background:#1f2a44; color:white; }
-    th, td { padding:6px; text-align:center; }
-    input, select { width:100%; padding:5px; margin:3px 0; }
-    .btn { padding:6px 12px; margin-top:10px; background:#1f2a44; color:white; border:none; }
+    table, th, td { border:1px solid #999; }
+    th { background:#1f2a44; color:white; padding:6px; }
+    td { padding:6px; }
+    input, select { width:100%; padding:4px; }
+    .btn { background:#1f2a44; color:white; border:none; padding:6px 12px; margin-top:10px; cursor:pointer; }
+    .right { text-align:right; margin-top:10px; }
   </style>
 </head>
 <body>
 
-<div class="menu">
-  <button onclick="openDoc()">ออกใบแจ้งหนี้</button>
-  <button onclick="showPage('customerHistory')">ประวัติลูกค้า</button>
-  <button onclick="showPage('vip')">ลูกค้า VIP</button>
-  <button onclick="showPage('debt')">ลูกหนี้ครบกำหนด</button>
-  <button onclick="showPage('dashboard')">Dashboard</button>
+<div class="topbar">
+  <button onclick="showPage('invoicePage')">ออกใบแจ้งหนี้</button>
+  <button onclick="showPage('customerPage')">ประวัติลูกค้า</button>
+  <button onclick="showPage('vipPage')">ลูกค้า VIP</button>
+  <button onclick="showPage('debtPage')">ลูกหนี้</button>
+  <button onclick="showPage('dashboardPage')">Dashboard</button>
 </div>
 
 <div class="container">
 
-  <div id="documentPage" class="box">
-    <h2>ใบแจ้งหนี้</h2>
-    เลขที่: <b id="docNo"></b>
-    <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
-    <input type="date" id="date">
+  <!-- INVOICE -->
+  <div id="invoicePage" class="card">
+    <div id="pdfArea">
+      <div class="header">
+        <div>
+          <h2>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</h2>
+          THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
+          เลขผู้เสียภาษี 0103566005842
+        </div>
+        <div>
+          <img src="logo.png" class="logo"><br>
+          <img src="signature.png" class="logo">
+        </div>
+      </div>
 
-    <table id="itemTable">
-      <thead>
-        <tr>
-          <th>ลำดับ</th>
-          <th>รายการผ้า</th>
-          <th>จำนวน</th>
-          <th>โหล</th>
-          <th>หลา</th>
-          <th>ส่วนลด</th>
-          <th>รวม</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <h3>ใบแจ้งหนี้</h3>
+      เลขที่: <b id="docNo"></b>
+      <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
+      <input type="date" id="date">
 
-    <button class="btn" onclick="addRow()">เพิ่มรายการ</button>
+      <table id="itemTable">
+        <thead>
+          <tr>
+            <th>ลำดับ</th>
+            <th>รายการผ้า</th>
+            <th>จำนวน</th>
+            <th>โหล</th>
+            <th>หลา</th>
+            <th>ส่วนลด</th>
+            <th>รวม</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
 
-    <h3>รวม: <span id="grandTotal">0</span></h3>
+      <button class="btn" onclick="addRow()">เพิ่มรายการ</button>
 
-    <select id="payment">
-      <option>เงินสด</option>
-      <option>โอน</option>
-      <option>CREDIT</option>
-    </select>
+      <div class="right">
+        รวมสินค้า: <span id="sumTotal">0</span><br>
+        VAT 7%: <span id="vat">0</span><br>
+        รวมสุทธิ: <span id="grandTotal">0</span>
+      </div>
+
+      วิธีชำระเงิน:
+      <select id="payment">
+        <option>เงินสด</option>
+        <option>โอน</option>
+        <option>CREDIT</option>
+      </select>
+    </div>
 
     <button class="btn" onclick="saveDoc()">บันทึก</button>
-    <button class="btn" onclick="generatePDF()">PDF</button>
+    <button class="btn" onclick="generatePDF()">PDF A4</button>
   </div>
 
-  <div id="customerHistory" class="box" style="display:none">
-    <h2>ประวัติลูกค้า</h2>
+  <!-- CUSTOMER HISTORY -->
+  <div id="customerPage" class="card" style="display:none">
+    <h3>ประวัติลูกค้า</h3>
     <input type="text" id="searchCustomer" placeholder="ชื่อลูกค้า" oninput="loadCustomerHistory()">
     <table>
-      <thead><tr><th>เลขที่</th><th>รายการ</th><th>ยอด</th></tr></thead>
+      <thead><tr><th>เลขที่</th><th>ยอด</th></tr></thead>
       <tbody id="customerHistoryTable"></tbody>
     </table>
     <h3>ยอดซื้อสะสม: <span id="customerTotal">0</span></h3>
   </div>
 
-  <div id="vip" class="box" style="display:none">
-    <h2>ลูกค้า VIP (เรียงยอดซื้อ)</h2>
+  <!-- VIP -->
+  <div id="vipPage" class="card" style="display:none">
+    <h3>ลูกค้า VIP</h3>
     <table>
       <thead><tr><th>ลูกค้า</th><th>ยอดซื้อรวม</th></tr></thead>
       <tbody id="vipTable"></tbody>
     </table>
   </div>
 
-  <div id="debt" class="box" style="display:none">
-    <h2>ลูกหนี้ครบกำหนด</h2>
+  <!-- DEBT -->
+  <div id="debtPage" class="card" style="display:none">
+    <h3>ลูกหนี้ค้างชำระ</h3>
     <table>
       <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th></tr></thead>
       <tbody id="debtTable"></tbody>
     </table>
   </div>
 
-  <div id="dashboard" class="box" style="display:none">
-    <h2>Dashboard ยอดขาย</h2>
+  <!-- DASHBOARD -->
+  <div id="dashboardPage" class="card" style="display:none">
+    <h3>Dashboard ยอดขาย</h3>
     <canvas id="salesChart"></canvas>
   </div>
 
@@ -113,14 +141,12 @@ var db = firebase.firestore();
 let counter = 1;
 document.getElementById("docNo").innerText = "INV-"+counter;
 
-function openDoc(){ showPage('documentPage'); }
-
 function showPage(page){
-  document.getElementById('documentPage').style.display='none';
-  document.getElementById('customerHistory').style.display='none';
-  document.getElementById('vip').style.display='none';
-  document.getElementById('debt').style.display='none';
-  document.getElementById('dashboard').style.display='none';
+  document.getElementById('invoicePage').style.display='none';
+  document.getElementById('customerPage').style.display='none';
+  document.getElementById('vipPage').style.display='none';
+  document.getElementById('debtPage').style.display='none';
+  document.getElementById('dashboardPage').style.display='none';
   document.getElementById(page).style.display='block';
   loadVIP();
   loadDebt();
@@ -156,7 +182,13 @@ function calculate(){
     total[i].innerText=sum.toFixed(2);
     sumTotal+=sum;
   }
-  document.getElementById('grandTotal').innerText=sumTotal.toFixed(2);
+
+  let vat=sumTotal*0.07;
+  let grand=sumTotal+vat;
+
+  document.getElementById('sumTotal').innerText=sumTotal.toFixed(2);
+  document.getElementById('vat').innerText=vat.toFixed(2);
+  document.getElementById('grandTotal').innerText=grand.toFixed(2);
 }
 
 function saveDoc(){
@@ -182,7 +214,7 @@ function loadCustomerHistory(){
     snapshot.forEach(doc=>{
       let d=doc.data();
       let row=table.insertRow();
-      row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td>`;
+      row.innerHTML=`<td>${d.docNo}</td><td>${d.total}</td>`;
       totalSum+=Number(d.total);
     });
     document.getElementById('customerTotal').innerText=totalSum.toFixed(2);
@@ -240,7 +272,7 @@ function loadChart(){
 async function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'mm', 'a4');
-  const content = document.getElementById("documentPage");
+  const content = document.getElementById("pdfArea");
 
   await doc.html(content, {
     callback: function (doc) {
