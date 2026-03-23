@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>THAI CHINA FABRIC ERP</title>
+<title>THAI CHINA FABRIC - SENIOR SOFT WEB ERP</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -14,13 +14,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body { font-family: Tahoma; margin:0; background:#f1f3f6; }
+body { font-family: Tahoma; margin:0; background:#eef1f5; }
 .topbar { background:#1f2a44; color:white; padding:10px; }
 .topbar button { background:none; border:none; color:white; margin-right:15px; cursor:pointer; }
 .container { padding:20px; }
-.card { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+.card { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); margin-bottom:20px; }
 .header { display:flex; justify-content:space-between; }
-.logo { height:70px; }
+.logo { height:60px; }
 table { width:100%; border-collapse: collapse; margin-top:10px; }
 table, th, td { border:1px solid #999; }
 th { background:#1f2a44; color:white; padding:6px; }
@@ -40,6 +40,8 @@ input, select { width:100%; padding:4px; }
   <button onclick="showPage('debtPage')">ลูกหนี้</button>
   <button onclick="showPage('reportPage')">รายงาน</button>
   <button onclick="showPage('dashboardPage')">Dashboard</button>
+  <button onclick="showPage('stockPage')">สต๊อก</button>
+  <button onclick="backupData()">Backup</button>
 </div>
 
 <div class="container">
@@ -99,7 +101,7 @@ VAT 7%: <span id="vat">0</span><br>
 <button class="btn" onclick="printPDF()">PDF</button>
 </div>
 
-<!-- RECEIPT AUTO -->
+<!-- RECEIPT -->
 <div id="receiptPage" class="card" style="display:none">
 <h3>ใบเสร็จรับเงิน</h3>
 <table>
@@ -144,6 +146,18 @@ VAT 7%: <span id="vat">0</span><br>
 <button class="btn" onclick="exportExcel()">Export Excel</button>
 </div>
 
+<!-- STOCK -->
+<div id="stockPage" class="card" style="display:none">
+<h3>สต๊อกผ้า</h3>
+<input type="text" id="stockName" placeholder="ชื่อผ้า">
+<input type="number" id="stockQty" placeholder="จำนวน">
+<button class="btn" onclick="addStock()">เพิ่มสต๊อก</button>
+<table>
+<thead><tr><th>รายการ</th><th>จำนวนคงเหลือ</th></tr></thead>
+<tbody id="stockTable"></tbody>
+</table>
+</div>
+
 <!-- DASHBOARD -->
 <div id="dashboardPage" style="display:none">
 <div class="dashboard-box">ยอดขายรวม<br><span id="monthSales">0</span></div>
@@ -170,13 +184,14 @@ let counter=1;
 document.getElementById('invNo').innerText='INV-'+counter;
 
 function showPage(page){
-['salePage','receiptPage','customerPage','debtPage','reportPage','dashboardPage'].forEach(p=>document.getElementById(p).style.display='none');
+['salePage','receiptPage','customerPage','debtPage','reportPage','dashboardPage','stockPage'].forEach(p=>document.getElementById(p).style.display='none');
 document.getElementById(page).style.display='block';
 loadReport();
 loadVIP();
 loadDebt();
 loadDashboard();
 loadReceipt();
+loadStock();
 }
 
 function addRow(){
@@ -219,11 +234,9 @@ let docNo=document.getElementById('invNo').innerText;
 let customer=document.getElementById('customerName').value;
 let total=document.getElementById('grandTotal').innerText;
 let payment=document.getElementById('payment').value;
-let date=document.getElementById('date').value;
 
 db.collection('documents').add({docNo,customer,total,payment,date:new Date()});
 
-// auto receipt
 if(payment!='CREDIT'){
   db.collection('receipts').add({docNo,customer,total,date:new Date()});
 }
@@ -328,6 +341,25 @@ data:{labels:Object.keys(totals),datasets:[{label:'ยอดขาย',data:Obje
 });
 }
 
+function addStock(){
+let name=document.getElementById('stockName').value;
+let qty=document.getElementById('stockQty').value;
+db.collection('stock').add({name,qty});
+loadStock();
+}
+
+function loadStock(){
+db.collection('stock').get().then(snapshot=>{
+let table=document.getElementById('stockTable');
+table.innerHTML='';
+snapshot.forEach(doc=>{
+let d=doc.data();
+let row=table.insertRow();
+row.innerHTML=`<td>${d.name}</td><td>${d.qty}</td>`;
+});
+});
+}
+
 function printPDF(){
 const { jsPDF } = window.jspdf;
 const doc = new jsPDF('p','mm','a4');
@@ -345,6 +377,18 @@ let ws=XLSX.utils.json_to_sheet(data);
 let wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,'Report');
 XLSX.writeFile(wb,'report.xlsx');
+});
+}
+
+function backupData(){
+db.collection('documents').get().then(snapshot=>{
+let data=[];
+snapshot.forEach(doc=> data.push(doc.data()));
+let blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+let a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='backup.json';
+a.click();
 });
 }
 </script>
