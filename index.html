@@ -50,7 +50,33 @@ justify-content:center;
 align-items:center;
 }
 .modal-box{background:#fff;padding:20px}
-</style>
+</style @page {
+  size: A4;
+  margin: 10mm;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .nav, button, input, select {
+    display: none;
+  }
+
+  .container {
+    width: 210mm;
+    min-height: 297mm;
+    border: 2px solid #d4af37;
+    padding: 10mm;
+    margin: 0;
+  }
+
+  table {
+    font-size: 12px;
+  }
+}>
+  
 </head>
 
 <body>
@@ -126,6 +152,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </div>
 
 <button onclick="openPayment()">บันทึก</button>
+<button onclick="savePDF()">บันทึก PDF</button>
 
 <div class="footer">
 <div class="signbox">ผู้อนุมัติ</div>
@@ -188,6 +215,22 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <tbody id="arTable"></tbody>
 </table>
 </div>
+  
+  .container {
+  position: relative;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  top: 35%;
+  left: 25%;
+  width: 300px;
+  height: 300px;
+  background: url('logo.png') no-repeat center;
+  background-size: contain;
+  opacity: 0.05;
+}
 
 <!-- STOCK -->
 <div id="stockPage" class="container" style="display:none">
@@ -283,9 +326,11 @@ due:due.value,
 status:method==="CREDIT"?"ค้าง":"ชำระแล้ว",
 items:items
 };
-
 bills.push(bill);
 localStorage.setItem("bills",JSON.stringify(bills));
+  function savePDF(){
+    window.print();
+}
 
 /* ตัดสต๊อก */
 items.forEach(it=>{
