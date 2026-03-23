@@ -2,48 +2,48 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>THAI CHINA FABRIC - ERP SYSTEM</title>
+  <title>THAI CHINA FABRIC ERP</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-    body { font-family: Tahoma, Arial; margin:0; background:#f0f2f5; }
-    .topbar { background:#1f2a44; color:white; padding:12px; font-size:14px; }
+    body { font-family: Tahoma; margin:0; background:#f4f6f9; }
+    .topbar { background:#1f2a44; color:white; padding:10px; }
     .topbar button { background:none; border:none; color:white; margin-right:15px; cursor:pointer; }
     .container { padding:20px; }
-    .card { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.08); }
-    .header { display:flex; justify-content:space-between; align-items:center; }
-    .logo { height:70px; }
+    .card { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .header { display:flex; justify-content:space-between; }
+    .logo { height:80px; }
     table { width:100%; border-collapse: collapse; margin-top:10px; }
-    table, th, td { border:1px solid #999; }
+    table, th, td { border:1px solid #000; }
     th { background:#1f2a44; color:white; padding:6px; }
     td { padding:6px; }
     input, select { width:100%; padding:4px; }
+    .right { text-align:right; }
     .btn { background:#1f2a44; color:white; border:none; padding:6px 12px; margin-top:10px; cursor:pointer; }
-    .right { text-align:right; margin-top:10px; }
+    .dashboard-box { display:inline-block; width:23%; background:white; padding:15px; margin:1%; box-shadow:0 0 8px rgba(0,0,0,0.1); border-radius:8px; }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <button onclick="showPage('invoicePage')">ออกใบแจ้งหนี้</button>
-  <button onclick="showPage('customerPage')">ประวัติลูกค้า</button>
-  <button onclick="showPage('vipPage')">ลูกค้า VIP</button>
-  <button onclick="showPage('debtPage')">ลูกหนี้</button>
+  <button onclick="showPage('taxPage')">ใบกำกับภาษี</button>
+  <button onclick="showPage('receiptPage')">ใบเสร็จรับเงิน</button>
   <button onclick="showPage('dashboardPage')">Dashboard</button>
+  <button onclick="backupData()">Backup</button>
 </div>
 
 <div class="container">
 
-  <!-- INVOICE -->
-  <div id="invoicePage" class="card">
-    <div id="pdfArea">
+  <!-- TAX INVOICE -->
+  <div id="taxPage" class="card">
+    <div id="taxArea">
       <div class="header">
         <div>
-          <h2>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</h2>
-          THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
+          <h2>ใบกำกับภาษี / TAX INVOICE</h2>
+          ห้างหุ้นส่วนจำกัด ผ้าไทย จีน<br>
           เลขผู้เสียภาษี 0103566005842
         </div>
         <div>
@@ -52,79 +52,80 @@
         </div>
       </div>
 
-      <h3>ใบแจ้งหนี้</h3>
-      เลขที่: <b id="docNo"></b>
-      <input type="text" id="customerName" placeholder="ชื่อลูกค้า">
-      <input type="date" id="date">
+      เลขที่: <b id="taxNo"></b>
+      <input type="text" id="custName" placeholder="ชื่อลูกค้า">
+      <input type="text" id="custTax" placeholder="เลขผู้เสียภาษีลูกค้า">
+      <input type="date" id="taxDate">
 
-      <table id="itemTable">
+      <table id="taxTable">
         <thead>
           <tr>
             <th>ลำดับ</th>
-            <th>รายการผ้า</th>
+            <th>รายการ</th>
             <th>จำนวน</th>
-            <th>โหล</th>
-            <th>หลา</th>
-            <th>ส่วนลด</th>
+            <th>ราคา</th>
             <th>รวม</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
 
-      <button class="btn" onclick="addRow()">เพิ่มรายการ</button>
-
       <div class="right">
-        รวมสินค้า: <span id="sumTotal">0</span><br>
-        VAT 7%: <span id="vat">0</span><br>
-        รวมสุทธิ: <span id="grandTotal">0</span>
+        มูลค่าสินค้า: <span id="taxSum">0</span><br>
+        VAT 7%: <span id="taxVat">0</span><br>
+        รวมเงิน: <span id="taxGrand">0</span>
       </div>
-
-      วิธีชำระเงิน:
-      <select id="payment">
-        <option>เงินสด</option>
-        <option>โอน</option>
-        <option>CREDIT</option>
-      </select>
     </div>
 
-    <button class="btn" onclick="saveDoc()">บันทึก</button>
-    <button class="btn" onclick="generatePDF()">PDF A4</button>
+    <button class="btn" onclick="addTaxRow()">เพิ่มรายการ</button>
+    <button class="btn" onclick="saveTax()">บันทึก</button>
+    <button class="btn" onclick="printPDF('taxArea','TaxInvoice.pdf')">PDF</button>
   </div>
 
-  <!-- CUSTOMER HISTORY -->
-  <div id="customerPage" class="card" style="display:none">
-    <h3>ประวัติลูกค้า</h3>
-    <input type="text" id="searchCustomer" placeholder="ชื่อลูกค้า" oninput="loadCustomerHistory()">
-    <table>
-      <thead><tr><th>เลขที่</th><th>ยอด</th></tr></thead>
-      <tbody id="customerHistoryTable"></tbody>
-    </table>
-    <h3>ยอดซื้อสะสม: <span id="customerTotal">0</span></h3>
-  </div>
+  <!-- RECEIPT -->
+  <div id="receiptPage" class="card" style="display:none">
+    <div id="receiptArea">
+      <div class="header">
+        <div>
+          <h2>ใบเสร็จรับเงิน / RECEIPT</h2>
+          ห้างหุ้นส่วนจำกัด ผ้าไทย จีน
+        </div>
+        <div>
+          <img src="logo.png" class="logo">
+        </div>
+      </div>
 
-  <!-- VIP -->
-  <div id="vipPage" class="card" style="display:none">
-    <h3>ลูกค้า VIP</h3>
-    <table>
-      <thead><tr><th>ลูกค้า</th><th>ยอดซื้อรวม</th></tr></thead>
-      <tbody id="vipTable"></tbody>
-    </table>
-  </div>
+      เลขที่: <b id="receiptNo"></b>
+      <input type="text" id="receiptCustomer" placeholder="ลูกค้า">
+      <input type="date" id="receiptDate">
 
-  <!-- DEBT -->
-  <div id="debtPage" class="card" style="display:none">
-    <h3>ลูกหนี้ค้างชำระ</h3>
-    <table>
-      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th></tr></thead>
-      <tbody id="debtTable"></tbody>
-    </table>
+      <table id="receiptTable">
+        <thead>
+          <tr>
+            <th>รายการ</th>
+            <th>จำนวนเงิน</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      รวมเงิน: <span id="receiptTotal">0</span>
+    </div>
+
+    <button class="btn" onclick="addReceiptRow()">เพิ่มรายการ</button>
+    <button class="btn" onclick="printPDF('receiptArea','Receipt.pdf')">PDF</button>
   </div>
 
   <!-- DASHBOARD -->
-  <div id="dashboardPage" class="card" style="display:none">
-    <h3>Dashboard ยอดขาย</h3>
-    <canvas id="salesChart"></canvas>
+  <div id="dashboardPage" style="display:none">
+    <div class="dashboard-box">ยอดขายวันนี้<br><span id="todaySales">0</span></div>
+    <div class="dashboard-box">ยอดขายเดือนนี้<br><span id="monthSales">0</span></div>
+    <div class="dashboard-box">ลูกหนี้<br><span id="debtTotal">0</span></div>
+    <div class="dashboard-box">ลูกค้า VIP<br><span id="vipName">-</span></div>
+
+    <div class="card">
+      <canvas id="salesChart"></canvas>
+    </div>
   </div>
 
 </div>
@@ -138,149 +139,90 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.firestore();
 
-let counter = 1;
-document.getElementById("docNo").innerText = "INV-"+counter;
+let taxCounter=1;
+let receiptCounter=1;
+document.getElementById('taxNo').innerText='TAX-'+taxCounter;
+document.getElementById('receiptNo').innerText='RC-'+receiptCounter;
 
 function showPage(page){
-  document.getElementById('invoicePage').style.display='none';
-  document.getElementById('customerPage').style.display='none';
-  document.getElementById('vipPage').style.display='none';
-  document.getElementById('debtPage').style.display='none';
+  document.getElementById('taxPage').style.display='none';
+  document.getElementById('receiptPage').style.display='none';
   document.getElementById('dashboardPage').style.display='none';
   document.getElementById(page).style.display='block';
-  loadVIP();
-  loadDebt();
-  loadChart();
+  loadDashboard();
 }
 
-function addRow(){
-  let table=document.querySelector('#itemTable tbody');
-  let rowCount=table.rows.length+1;
+function addTaxRow(){
+  let table=document.querySelector('#taxTable tbody');
   let row=table.insertRow();
-  row.innerHTML=`
-    <td>${rowCount}</td>
-    <td><input type='text'></td>
-    <td><input type='number' class='qty' oninput='calculate()'></td>
-    <td><input type='number' class='dozen' oninput='calculate()'></td>
-    <td><input type='number' class='yard' oninput='calculate()'></td>
-    <td><input type='number' class='disc' value='0' oninput='calculate()'></td>
-    <td class='total'>0</td>`;
+  row.innerHTML=`<td>${table.rows.length}</td><td><input></td><td><input type='number' class='qty' oninput='calcTax()'></td><td><input type='number' class='price' oninput='calcTax()'></td><td class='total'>0</td>`;
 }
-addRow();
+addTaxRow();
 
-function calculate(){
+function calcTax(){
   let qty=document.querySelectorAll('.qty');
-  let dozen=document.querySelectorAll('.dozen');
-  let yard=document.querySelectorAll('.yard');
-  let disc=document.querySelectorAll('.disc');
+  let price=document.querySelectorAll('.price');
   let total=document.querySelectorAll('.total');
-  let sumTotal=0;
-
+  let sum=0;
   for(let i=0;i<qty.length;i++){
-    let price=((dozen[i].value||0)*12)+((yard[i].value||0));
-    let sum=(qty[i].value||0)*price-(disc[i].value||0);
-    total[i].innerText=sum.toFixed(2);
-    sumTotal+=sum;
+    let s=(qty[i].value||0)*(price[i].value||0);
+    total[i].innerText=s;
+    sum+=s;
   }
-
-  let vat=sumTotal*0.07;
-  let grand=sumTotal+vat;
-
-  document.getElementById('sumTotal').innerText=sumTotal.toFixed(2);
-  document.getElementById('vat').innerText=vat.toFixed(2);
-  document.getElementById('grandTotal').innerText=grand.toFixed(2);
+  let vat=sum*0.07;
+  let grand=sum+vat;
+  document.getElementById('taxSum').innerText=sum.toFixed(2);
+  document.getElementById('taxVat').innerText=vat.toFixed(2);
+  document.getElementById('taxGrand').innerText=grand.toFixed(2);
 }
 
-function saveDoc(){
-  let docNo=document.getElementById('docNo').innerText;
-  let customer=document.getElementById('customerName').value;
-  let total=document.getElementById('grandTotal').innerText;
-  let payment=document.getElementById('payment').value;
-
-  db.collection('documents').add({docNo,customer,total,payment,date:new Date()});
-
-  counter++;
-  document.getElementById('docNo').innerText='INV-'+counter;
-  alert('บันทึกเรียบร้อย');
+function saveTax(){
+  let total=document.getElementById('taxGrand').innerText;
+  db.collection('tax').add({total,date:new Date()});
+  taxCounter++;
+  document.getElementById('taxNo').innerText='TAX-'+taxCounter;
+  alert('บันทึกใบกำกับภาษี');
 }
 
-function loadCustomerHistory(){
-  let name=document.getElementById('searchCustomer').value;
-  let table=document.getElementById('customerHistoryTable');
-  table.innerHTML='';
-  let totalSum=0;
-
-  db.collection('documents').where('customer','==',name).get().then(snapshot=>{
-    snapshot.forEach(doc=>{
-      let d=doc.data();
-      let row=table.insertRow();
-      row.innerHTML=`<td>${d.docNo}</td><td>${d.total}</td>`;
-      totalSum+=Number(d.total);
-    });
-    document.getElementById('customerTotal').innerText=totalSum.toFixed(2);
-  });
+function addReceiptRow(){
+  let table=document.querySelector('#receiptTable tbody');
+  let row=table.insertRow();
+  row.innerHTML=`<td><input></td><td><input type='number' oninput='calcReceipt()'></td>`;
 }
 
-function loadVIP(){
-  db.collection('documents').get().then(snapshot=>{
-    let totals={};
-    snapshot.forEach(doc=>{
-      let d=doc.data();
-      if(!totals[d.customer]) totals[d.customer]=0;
-      totals[d.customer]+=Number(d.total);
-    });
-
-    let sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
-    let table=document.getElementById('vipTable');
-    table.innerHTML='';
-    sorted.forEach(x=>{
-      let row=table.insertRow();
-      row.innerHTML=`<td>${x[0]}</td><td>${x[1].toFixed(2)}</td>`;
-    });
-  });
+function calcReceipt(){
+  let inputs=document.querySelectorAll('#receiptTable tbody input[type=number]');
+  let sum=0;
+  inputs.forEach(i=> sum+=Number(i.value||0));
+  document.getElementById('receiptTotal').innerText=sum.toFixed(2);
 }
 
-function loadDebt(){
-  db.collection('documents').where('payment','==','CREDIT').get().then(snapshot=>{
-    let table=document.getElementById('debtTable');
-    table.innerHTML='';
-    snapshot.forEach(doc=>{
-      let d=doc.data();
-      let row=table.insertRow();
-      row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td>`;
-    });
-  });
-}
-
-function loadChart(){
-  db.collection('documents').get().then(snapshot=>{
-    let totals={};
-    snapshot.forEach(doc=>{
-      let d=doc.data();
-      let m=new Date(d.date.seconds*1000).getMonth()+1;
-      if(!totals[m]) totals[m]=0;
-      totals[m]+=Number(d.total);
-    });
-
-    new Chart(document.getElementById('salesChart'),{
-      type:'bar',
-      data:{labels:Object.keys(totals),datasets:[{label:'ยอดขาย',data:Object.values(totals)}]}
-    });
-  });
-}
-
-async function generatePDF() {
+function printPDF(area,file){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const content = document.getElementById("pdfArea");
+  const doc = new jsPDF('p','mm','a4');
+  doc.html(document.getElementById(area),{
+    callback:function(doc){ doc.save(file); },
+    x:10,y:10,width:190
+  });
+}
 
-  await doc.html(content, {
-    callback: function (doc) {
-      doc.save("invoice_A4.pdf");
-    },
-    x: 10,
-    y: 10,
-    width: 190
+function loadDashboard(){
+  db.collection('tax').get().then(snapshot=>{
+    let total=0;
+    snapshot.forEach(doc=> total+=Number(doc.data().total));
+    document.getElementById('monthSales').innerText=total.toFixed(2);
+  });
+}
+
+function backupData(){
+  db.collection('tax').get().then(snapshot=>{
+    let data=[];
+    snapshot.forEach(doc=> data.push(doc.data()));
+    let blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+    let a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='backup.json';
+    a.click();
   });
 }
 </script>
