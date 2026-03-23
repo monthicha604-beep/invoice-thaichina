@@ -84,8 +84,12 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <div class="header">
 <div class="box">
-ลูกค้า
+ชื่อลูกค้า
 <input id="customer">
+ที่อยู่ลูกค้า
+<input id="address">
+เลขประจำตัวผู้เสียภาษี
+<input id="taxid">
 </div>
 
 <div class="box">
@@ -96,7 +100,7 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </div>
 </div>
 
-<input id="name" placeholder="สินค้า">
+<input id="name" placeholder="รายการสินค้า">
 <input id="qty" placeholder="จำนวน">
 <input id="dozen" placeholder="โหล">
 <input id="yard" placeholder="หลา">
@@ -138,84 +142,27 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 </div>
 
-<!-- ================= HISTORY ================= -->
-<div id="historyPage" class="container" style="display:none">
-<h2>ประวัติ</h2>
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>สถานะ</th>
-</tr>
-</thead>
-<tbody id="historyTable"></tbody>
-</table>
-</div>
-
-<!-- ================= AR ================= -->
-<div id="arPage" class="container" style="display:none">
-<h2>ลูกหนี้</h2>
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th><th>ลูกค้า</th><th>ยอดค้าง</th><th>ครบกำหนด</th><th>สถานะ</th><th>รับชำระ</th>
-</tr>
-</thead>
-<tbody id="arTable"></tbody>
-</table>
-</div>
-
-<!-- ================= TAX ================= -->
-<div id="taxPage" class="container" style="display:none">
-<h2>รายงานภาษีขาย</h2>
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th><th>ลูกค้า</th><th>ก่อน VAT</th><th>VAT</th><th>รวม</th>
-</tr>
-</thead>
-<tbody id="taxTable"></tbody>
-</table>
-</div>
-
-<!-- ================= PROFIT ================= -->
-<div id="profitPage" class="container" style="display:none">
-<h2>รายงานกำไร</h2>
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th><th>ยอดขาย</th><th>ต้นทุน</th><th>กำไร</th>
-</tr>
-</thead>
-<tbody id="profitTable"></tbody>
-</table>
-</div>
-
-<!-- ================= BILLING ================= -->
-<div id="billingPage" class="container" style="display:none">
-<h2>ใบวางบิล</h2>
-<table>
-<thead>
-<tr>
-<th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>ครบกำหนด</th>
-</tr>
-</thead>
-<tbody id="billingTable"></tbody>
-</table>
-</div>
-
 <!-- ================= DASHBOARD ================= -->
 <div id="dashboardPage" class="container" style="display:none">
-<canvas id="chart"></canvas>
-</div>
+<h2>รายงานยอดขาย</h2>
 
-<!-- PAYMENT -->
-<div id="paymentModal" class="modal">
-<div class="modal-box">
-<button onclick="cash()">เงินสด</button>
-<button onclick="credit()">CREDIT</button><br><br>
-วันครบกำหนด:
-<input type="date" id="due">
-</div>
+ประเภทบิล:
+<select id="filterType">
+<option value="">ทั้งหมด</option>
+<option value="INV">INV</option>
+<option value="RC">RC</option>
+<option value="PO">PO</option>
+</select>
+
+ลูกค้า:
+<select id="filterCustomer"></select>
+
+<button onclick="loadChart()">แสดงรายงาน</button>
+
+<h3>ยอดขายรวม: <span id="sumSales"></span></h3>
+<h3>จำนวนบิล: <span id="countBills"></span></h3>
+
+<canvas id="chart"></canvas>
 </div>
 
 <script>
@@ -283,140 +230,72 @@ total.innerText=(sum+vatVal).toFixed(2);
 }
 
 /* SAVE */
-function openPayment(){paymentModal.style.display="flex"}
-
-function cash(){saveBill("เงินสด")}
-function credit(){saveBill("CREDIT")}
-
-function saveBill(method){
+function openPayment(){
 let sum=items.reduce((s,i)=>s+i.total,0);
 let vatVal=prefix==="INV"?sum*0.07:0;
 
 let bill={
 id:invoiceNo.innerText,
 customer:customer.value,
+address:address.value,
+taxid:taxid.value,
 subtotal:sum,
 vat:vatVal,
 total:sum+vatVal,
-payment:method,
-due:due.value,
-status: method==="CREDIT"?"ค้าง":"ชำระแล้ว",
 type:prefix,
-items:items,
-cost: sum*0.7
+items:items
 };
 
 bills.push(bill);
-currentIndex=bills.length-1;
-
 localStorage.setItem("bills",JSON.stringify(bills));
-paymentModal.style.display="none";
+
 alert("บันทึกแล้ว");
 }
 
-/* AR */
-function loadAR(){
-let html="";
-bills.filter(b=>b.status==="ค้าง").forEach((b,i)=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.customer}</td>
-<td>${b.total}</td>
-<td>${b.due}</td>
-<td>${b.status}</td>
-<td><button onclick="paid(${i})">รับชำระ</button></td>
-</tr>`;
+/* DASHBOARD FILTER */
+function loadCustomersToFilter(){
+let select=document.getElementById("filterCustomer");
+let customers=[...new Set(bills.map(b=>b.customer))];
+select.innerHTML='<option value="">ทั้งหมด</option>';
+customers.forEach(c=>{
+select.innerHTML+=`<option value="${c}">${c}</option>`;
 });
-arTable.innerHTML=html;
 }
-
-function paid(i){
-bills[i].status="ชำระแล้ว";
-localStorage.setItem("bills",JSON.stringify(bills));
-loadAR();
-}
-
-/* TAX */
-function loadTax(){
-let html="";
-bills.filter(b=>b.type==="INV").forEach(b=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.customer}</td>
-<td>${b.subtotal}</td>
-<td>${b.vat}</td>
-<td>${b.total}</td>
-</tr>`;
-});
-taxTable.innerHTML=html;
-}
-
-/* PROFIT */
-function loadProfit(){
-let html="";
-bills.forEach(b=>{
-let profit=b.total-b.cost;
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.total}</td>
-<td>${b.cost}</td>
-<td>${profit}</td>
-</tr>`;
-});
-profitTable.innerHTML=html;
-}
-
-/* BILLING */
-function loadBilling(){
-let html="";
-bills.filter(b=>b.status==="ค้าง").forEach(b=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.customer}</td>
-<td>${b.total}</td>
-<td>${b.due}</td>
-</tr>`;
-});
-billingTable.innerHTML=html;
-}
+loadCustomersToFilter();
 
 /* DASHBOARD */
 function loadChart(){
-let data=bills.map(b=>b.total);
-new Chart(chart,{type:"bar",data:{labels:bills.map(b=>b.id),datasets:[{data:data}]}})
+
+let type=document.getElementById("filterType").value;
+let cust=document.getElementById("filterCustomer").value;
+
+let filtered=bills.filter(b=>{
+return (type===""||b.type===type) &&
+       (cust===""||b.customer===cust);
+});
+
+let sum=0;
+filtered.forEach(b=>sum+=b.total);
+
+document.getElementById("sumSales").innerText=sum.toFixed(2);
+document.getElementById("countBills").innerText=filtered.length;
+
+new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels:filtered.map(b=>b.id),
+datasets:[{data:filtered.map(b=>b.total)}]
+}
+});
 }
 
 /* PAGE */
 function showPage(p){
 billPage.style.display="none";
-historyPage.style.display="none";
 dashboardPage.style.display="none";
-arPage.style.display="none";
-taxPage.style.display="none";
-profitPage.style.display="none";
-billingPage.style.display="none";
 
 if(p==="bill") billPage.style.display="block";
-if(p==="history") loadHistory(), historyPage.style.display="block";
-if(p==="dashboard") loadChart(), dashboardPage.style.display="block";
-if(p==="ar") loadAR(), arPage.style.display="block";
-if(p==="tax") loadTax(), taxPage.style.display="block";
-if(p==="profit") loadProfit(), profitPage.style.display="block";
-if(p==="billing") loadBilling(), billingPage.style.display="block";
-}
-
-/* HISTORY */
-function loadHistory(){
-let html="";
-bills.forEach(b=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.customer}</td>
-<td>${b.total}</td>
-<td>${b.status}</td>
-</tr>`;
-});
-historyTable.innerHTML=html;
+if(p==="dashboard") dashboardPage.style.display="block";
 }
 
 </script>
