@@ -59,22 +59,14 @@ align-items:center;
 <button onclick="showPage('bill')">ออกบิล</button>
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('ar')">ลูกหนี้</button>
-<button onclick="showPage('tax')">ภาษีขาย</button>
-<button onclick="showPage('profit')">กำไร</button>
-<button onclick="showPage('dashboard')">ยอดขาย</button>
 <button onclick="showPage('billing')">ใบวางบิล</button>
+<button onclick="showPage('dashboard')">ยอดขาย</button>
 </div>
 
 <!-- ================= BILL ================= -->
 <div id="billPage" class="container">
 
-<div style="text-align:center">
-<img src="logo.png" width="80"><br>
-<b>ห้างหุ้นส่วนจำกัด ผ้าไทย จีน</b><br>
-THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
-เลขผู้เสียภาษี 0103566005842
 <h2 id="docType">ใบกำกับภาษี</h2>
-</div>
 
 <select onchange="changeType(this.value)">
 <option value="INV">ใบกำกับภาษี</option>
@@ -86,27 +78,22 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <div class="box">
 ชื่อลูกค้า
 <input id="customer">
-ที่อยู่ลูกค้า
+ที่อยู่
 <input id="address">
-เลขประจำตัวผู้เสียภาษี
+เลขผู้เสียภาษี
 <input id="taxid">
 </div>
 
 <div class="box">
 เลขที่: <span id="invoiceNo"></span><br>
-วันที่: <input type="date" id="date"><br>
-<button onclick="prevBill()">◀️</button>
-<button onclick="nextBill()">▶️</button>
+วันที่: <input type="date" id="date">
 </div>
 </div>
 
 <input id="name" placeholder="รายการสินค้า">
 <input id="qty" placeholder="จำนวน">
-<input id="dozen" placeholder="โหล">
-<input id="yard" placeholder="หลา">
-<input id="discount" placeholder="ส่วนลด">
 <input id="price" placeholder="ราคา">
-
+<input id="discount" placeholder="ส่วนลด">
 <button onclick="addItem()">เพิ่ม</button>
 
 <table>
@@ -115,8 +102,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 <th>ลำดับ</th>
 <th>รายการสินค้า</th>
 <th>จำนวน</th>
-<th>โหล</th>
-<th>หลา</th>
 <th>ส่วนลด</th>
 <th>รวม</th>
 </tr>
@@ -131,7 +116,6 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </div>
 
 <button onclick="openPayment()">บันทึก</button>
-<button onclick="window.print()">PDF</button>
 
 <div class="footer">
 <div class="signbox">ผู้อนุมัติ</div>
@@ -142,62 +126,95 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 </div>
 
-<!-- ================= DASHBOARD ================= -->
+<!-- PAYMENT -->
+<div id="paymentModal" class="modal">
+<div class="modal-box">
+<button onclick="saveBill('เงินสด')">เงินสด</button>
+<button onclick="saveBill('CREDIT')">CREDIT</button><br><br>
+วันครบกำหนด:
+<input type="date" id="due">
+</div>
+</div>
+
+<!-- HISTORY -->
+<div id="historyPage" class="container" style="display:none">
+<h2>ประวัติ</h2>
+<table>
+<thead><tr><th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>สถานะ</th></tr></thead>
+<tbody id="historyTable"></tbody>
+</table>
+</div>
+
+<!-- AR -->
+<div id="arPage" class="container" style="display:none">
+<h2>ลูกหนี้</h2>
+<table>
+<thead>
+<tr><th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>ครบกำหนด</th><th>สถานะ</th></tr>
+</thead>
+<tbody id="arTable"></tbody>
+</table>
+</div>
+
+<!-- BILLING -->
+<div id="billingPage" class="container" style="display:none">
+<h2>ใบวางบิล</h2>
+
+เลือกลูกค้า:
+<select id="billingCustomer"></select>
+<button onclick="loadBilling()">แสดง</button>
+
+<table>
+<thead>
+<tr>
+<th>เลขบิล</th>
+<th>รายการสินค้า</th>
+<th>จำนวน</th>
+<th>ยอด</th>
+<th>ครบกำหนด</th>
+<th>สถานะ</th>
+</tr>
+</thead>
+<tbody id="billingTable"></tbody>
+</table>
+</div>
+
+<!-- DASHBOARD -->
 <div id="dashboardPage" class="container" style="display:none">
 <h2>รายงานยอดขาย</h2>
-
-ประเภทบิล:
-<select id="filterType">
-<option value="">ทั้งหมด</option>
-<option value="INV">INV</option>
-<option value="RC">RC</option>
-<option value="PO">PO</option>
-</select>
-
-ลูกค้า:
-<select id="filterCustomer"></select>
-
-<button onclick="loadChart()">แสดงรายงาน</button>
-
-<h3>ยอดขายรวม: <span id="sumSales"></span></h3>
-<h3>จำนวนบิล: <span id="countBills"></span></h3>
-
 <canvas id="chart"></canvas>
 </div>
 
 <script>
-
 let items=[];
 let bills=JSON.parse(localStorage.getItem("bills")||"[]");
-let currentIndex=bills.length-1;
 let prefix="INV";
+
+/* ===== INVOICE NUMBER RUN ONLY AFTER SAVE ===== */
+function getNextInvoiceNumber(){
+let key = prefix+"_NO";
+let num = localStorage.getItem(key) || 1;
+return prefix+"-"+String(num).padStart(4,'0');
+}
+function increaseInvoiceNumber(){
+let key = prefix+"_NO";
+let num = localStorage.getItem(key) || 1;
+num++;
+localStorage.setItem(key,num);
+}
+invoiceNo.innerText=getNextInvoiceNumber();
 
 /* TYPE */
 function changeType(v){
 prefix=v;
 docType.innerText=v==="INV"?"ใบกำกับภาษี":v==="RC"?"ใบเสร็จ":"ใบสั่งสินค้า";
+invoiceNo.innerText=getNextInvoiceNumber();
 }
-
-/* ID */
-function generateID(){
-let c=localStorage.getItem(prefix)||0;
-c++;
-localStorage.setItem(prefix,c);
-return prefix+"-"+String(c).padStart(4,'0');
-}
-invoiceNo.innerText=generateID();
 
 /* ITEM */
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
-items.push({
-name:name.value,
-qty:qty.value,
-dozen:dozen.value,
-yard:yard.value,
-discount:discount.value,
-total:total
-});
+items.push({name:name.value,qty:qty.value,total:total});
 render();
 }
 
@@ -208,9 +225,7 @@ html+=`<tr>
 <td>${x+1}</td>
 <td>${i.name}</td>
 <td>${i.qty}</td>
-<td>${i.dozen}</td>
-<td>${i.yard}</td>
-<td>${i.discount}</td>
+<td>0</td>
 <td>${i.total}</td>
 </tr>`;
 sum+=i.total;
@@ -218,86 +233,113 @@ sum+=i.total;
 table.innerHTML=html;
 
 let vatVal = prefix==="INV"?sum*0.07:0;
-
 subtotal.innerText=sum.toFixed(2);
-if(prefix==="INV"){
-vatRow.style.display="block";
-vat.innerText=vatVal.toFixed(2);
-}else{
-vatRow.style.display="none";
-}
+if(prefix==="INV"){ vatRow.style.display="block"; vat.innerText=vatVal.toFixed(2); }
+else{ vatRow.style.display="none"; }
 total.innerText=(sum+vatVal).toFixed(2);
 }
 
 /* SAVE */
-function openPayment(){
+function openPayment(){ paymentModal.style.display="flex"; }
+
+function saveBill(method){
 let sum=items.reduce((s,i)=>s+i.total,0);
-let vatVal=prefix==="INV"?sum*0.07:0;
+let vatVal = prefix==="INV"?sum*0.07:0;
 
 let bill={
 id:invoiceNo.innerText,
 customer:customer.value,
-address:address.value,
-taxid:taxid.value,
 subtotal:sum,
 vat:vatVal,
 total:sum+vatVal,
+payment:method,
+due:due.value,
+status: method==="CREDIT"?"ค้าง":"ชำระแล้ว",
 type:prefix,
-items:items
+items:JSON.parse(JSON.stringify(items))
 };
 
 bills.push(bill);
 localStorage.setItem("bills",JSON.stringify(bills));
 
-alert("บันทึกแล้ว");
+increaseInvoiceNumber();
+invoiceNo.innerText=getNextInvoiceNumber();
+items=[];
+render();
+paymentModal.style.display="none";
 }
 
-/* DASHBOARD FILTER */
-function loadCustomersToFilter(){
-let select=document.getElementById("filterCustomer");
+/* HISTORY */
+function loadHistory(){
+let html="";
+bills.forEach(b=>{
+html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td><td>${b.status}</td></tr>`;
+});
+historyTable.innerHTML=html;
+}
+
+/* AR */
+function loadAR(){
+let html="";
+bills.filter(b=>b.status==="ค้าง").forEach(b=>{
+html+=`<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.total}</td><td>${b.due}</td><td>${b.status}</td></tr>`;
+});
+arTable.innerHTML=html;
+}
+
+/* BILLING */
+function loadBillingCustomers(){
+let select=document.getElementById("billingCustomer");
 let customers=[...new Set(bills.map(b=>b.customer))];
 select.innerHTML='<option value="">ทั้งหมด</option>';
 customers.forEach(c=>{
 select.innerHTML+=`<option value="${c}">${c}</option>`;
 });
 }
-loadCustomersToFilter();
+
+function loadBilling(){
+let cust=document.getElementById("billingCustomer").value;
+let html="";
+bills.filter(b=>b.status==="ค้าง" && (cust===""||b.customer===cust)).forEach(b=>{
+let itemsText=b.items.map(i=>i.name).join("<br>");
+let qtyText=b.items.map(i=>i.qty).join("<br>");
+
+html+=`<tr>
+<td>${b.id}</td>
+<td>${itemsText}</td>
+<td>${qtyText}</td>
+<td>${b.total}</td>
+<td>${b.due}</td>
+<td>${b.status}</td>
+</tr>`;
+});
+billingTable.innerHTML=html;
+}
 
 /* DASHBOARD */
 function loadChart(){
-
-let type=document.getElementById("filterType").value;
-let cust=document.getElementById("filterCustomer").value;
-
-let filtered=bills.filter(b=>{
-return (type===""||b.type===type) &&
-       (cust===""||b.customer===cust);
-});
-
-let sum=0;
-filtered.forEach(b=>sum+=b.total);
-
-document.getElementById("sumSales").innerText=sum.toFixed(2);
-document.getElementById("countBills").innerText=filtered.length;
-
+let data=bills.map(b=>b.total);
 new Chart(document.getElementById("chart"),{
 type:"bar",
-data:{
-labels:filtered.map(b=>b.id),
-datasets:[{data:filtered.map(b=>b.total)}]
-}
+data:{labels:bills.map(b=>b.id),
+datasets:[{data:data}]}
 });
 }
 
 /* PAGE */
 function showPage(p){
 billPage.style.display="none";
+historyPage.style.display="none";
+arPage.style.display="none";
+billingPage.style.display="none";
 dashboardPage.style.display="none";
 
 if(p==="bill") billPage.style.display="block";
-if(p==="dashboard") dashboardPage.style.display="block";
+if(p==="history"){historyPage.style.display="block";loadHistory();}
+if(p==="ar"){arPage.style.display="block";loadAR();}
+if(p==="billing"){billingPage.style.display="block";loadBillingCustomers();loadBilling();}
+if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
 }
-
 </script>
 </body>
 </html>
