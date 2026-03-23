@@ -50,10 +50,6 @@ justify-content:center;
 align-items:center;
 }
 .modal-box{background:#fff;padding:20px}
-
-@media print{
-.nav,button,input,select{display:none}
-}
 </style>
 </head>
 
@@ -64,7 +60,9 @@ align-items:center;
 <button onclick="showPage('history')">ประวัติ</button>
 <button onclick="showPage('ar')">ลูกหนี้</button>
 <button onclick="showPage('tax')">ภาษีขาย</button>
+<button onclick="showPage('profit')">กำไร</button>
 <button onclick="showPage('dashboard')">ยอดขาย</button>
+<button onclick="showPage('billing')">ใบวางบิล</button>
 </div>
 
 <!-- ================= BILL ================= -->
@@ -100,14 +98,23 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <input id="name" placeholder="สินค้า">
 <input id="qty" placeholder="จำนวน">
-<input id="price" placeholder="ราคา">
+<input id="dozen" placeholder="โหล">
+<input id="yard" placeholder="หลา">
 <input id="discount" placeholder="ส่วนลด">
+<input id="price" placeholder="ราคา">
+
 <button onclick="addItem()">เพิ่ม</button>
 
 <table>
 <thead>
 <tr>
-<th>ลำดับ</th><th>สินค้า</th><th>จำนวน</th><th>ราคา</th><th>รวม</th>
+<th>ลำดับ</th>
+<th>รายการสินค้า</th>
+<th>จำนวน</th>
+<th>โหล</th>
+<th>หลา</th>
+<th>ส่วนลด</th>
+<th>รวม</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -146,11 +153,11 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 
 <!-- ================= AR ================= -->
 <div id="arPage" class="container" style="display:none">
-<h2>ลูกหนี้คงค้าง</h2>
+<h2>ลูกหนี้</h2>
 <table>
 <thead>
 <tr>
-<th>เลขบิล</th><th>ลูกค้า</th><th>ยอดค้าง</th><th>ครบกำหนด</th><th>สถานะ</th>
+<th>เลขบิล</th><th>ลูกค้า</th><th>ยอดค้าง</th><th>ครบกำหนด</th><th>สถานะ</th><th>รับชำระ</th>
 </tr>
 </thead>
 <tbody id="arTable"></tbody>
@@ -167,6 +174,32 @@ THAI CHINA FABRIC LIMITED PARTNERSHIP<br>
 </tr>
 </thead>
 <tbody id="taxTable"></tbody>
+</table>
+</div>
+
+<!-- ================= PROFIT ================= -->
+<div id="profitPage" class="container" style="display:none">
+<h2>รายงานกำไร</h2>
+<table>
+<thead>
+<tr>
+<th>เลขบิล</th><th>ยอดขาย</th><th>ต้นทุน</th><th>กำไร</th>
+</tr>
+</thead>
+<tbody id="profitTable"></tbody>
+</table>
+</div>
+
+<!-- ================= BILLING ================= -->
+<div id="billingPage" class="container" style="display:none">
+<h2>ใบวางบิล</h2>
+<table>
+<thead>
+<tr>
+<th>เลขบิล</th><th>ลูกค้า</th><th>ยอด</th><th>ครบกำหนด</th>
+</tr>
+</thead>
+<tbody id="billingTable"></tbody>
 </table>
 </div>
 
@@ -210,7 +243,14 @@ invoiceNo.innerText=generateID();
 /* ITEM */
 function addItem(){
 let total=(qty.value*price.value)-discount.value;
-items.push({name:name.value,qty:qty.value,price:price.value,total});
+items.push({
+name:name.value,
+qty:qty.value,
+dozen:dozen.value,
+yard:yard.value,
+discount:discount.value,
+total:total
+});
 render();
 }
 
@@ -221,7 +261,9 @@ html+=`<tr>
 <td>${x+1}</td>
 <td>${i.name}</td>
 <td>${i.qty}</td>
-<td>${i.price}</td>
+<td>${i.dozen}</td>
+<td>${i.yard}</td>
+<td>${i.discount}</td>
 <td>${i.total}</td>
 </tr>`;
 sum+=i.total;
@@ -260,7 +302,8 @@ payment:method,
 due:due.value,
 status: method==="CREDIT"?"ค้าง":"ชำระแล้ว",
 type:prefix,
-items:items
+items:items,
+cost: sum*0.7
 };
 
 bills.push(bill);
@@ -271,56 +314,26 @@ paymentModal.style.display="none";
 alert("บันทึกแล้ว");
 }
 
-/* NAV BILL */
-function prevBill(){
-if(currentIndex>0){
-currentIndex--;
-loadBill();
-}
-}
-
-function nextBill(){
-items=[];
-customer.value="";
-invoiceNo.innerText=generateID();
-render();
-}
-
-function loadBill(){
-let b=bills[currentIndex];
-customer.value=b.customer;
-invoiceNo.innerText=b.id;
-items=b.items;
-render();
-}
-
-/* HISTORY */
-function loadHistory(){
-let html="";
-bills.forEach(b=>{
-html+=`<tr>
-<td>${b.id}</td>
-<td>${b.customer}</td>
-<td>${b.total}</td>
-<td>${b.status}</td>
-</tr>`;
-});
-historyTable.innerHTML=html;
-}
-
 /* AR */
 function loadAR(){
 let html="";
-bills.filter(b=>b.status==="ค้าง").forEach(b=>{
+bills.filter(b=>b.status==="ค้าง").forEach((b,i)=>{
 html+=`<tr>
 <td>${b.id}</td>
 <td>${b.customer}</td>
 <td>${b.total}</td>
 <td>${b.due}</td>
 <td>${b.status}</td>
+<td><button onclick="paid(${i})">รับชำระ</button></td>
 </tr>`;
 });
 arTable.innerHTML=html;
+}
+
+function paid(i){
+bills[i].status="ชำระแล้ว";
+localStorage.setItem("bills",JSON.stringify(bills));
+loadAR();
 }
 
 /* TAX */
@@ -338,17 +351,39 @@ html+=`<tr>
 taxTable.innerHTML=html;
 }
 
+/* PROFIT */
+function loadProfit(){
+let html="";
+bills.forEach(b=>{
+let profit=b.total-b.cost;
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.total}</td>
+<td>${b.cost}</td>
+<td>${profit}</td>
+</tr>`;
+});
+profitTable.innerHTML=html;
+}
+
+/* BILLING */
+function loadBilling(){
+let html="";
+bills.filter(b=>b.status==="ค้าง").forEach(b=>{
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.customer}</td>
+<td>${b.total}</td>
+<td>${b.due}</td>
+</tr>`;
+});
+billingTable.innerHTML=html;
+}
+
 /* DASHBOARD */
 function loadChart(){
-let months={};
-bills.forEach(b=>{
-let m=b.id.substring(4,6);
-months[m]=(months[m]||0)+b.total;
-});
-new Chart(chart,{
-type:"bar",
-data:{labels:Object.keys(months),datasets:[{data:Object.values(months)}]}
-});
+let data=bills.map(b=>b.total);
+new Chart(chart,{type:"bar",data:{labels:bills.map(b=>b.id),datasets:[{data:data}]}})
 }
 
 /* PAGE */
@@ -358,12 +393,30 @@ historyPage.style.display="none";
 dashboardPage.style.display="none";
 arPage.style.display="none";
 taxPage.style.display="none";
+profitPage.style.display="none";
+billingPage.style.display="none";
 
 if(p==="bill") billPage.style.display="block";
-if(p==="history"){historyPage.style.display="block";loadHistory();}
-if(p==="dashboard"){dashboardPage.style.display="block";loadChart();}
-if(p==="ar"){arPage.style.display="block";loadAR();}
-if(p==="tax"){taxPage.style.display="block";loadTax();}
+if(p==="history") loadHistory(), historyPage.style.display="block";
+if(p==="dashboard") loadChart(), dashboardPage.style.display="block";
+if(p==="ar") loadAR(), arPage.style.display="block";
+if(p==="tax") loadTax(), taxPage.style.display="block";
+if(p==="profit") loadProfit(), profitPage.style.display="block";
+if(p==="billing") loadBilling(), billingPage.style.display="block";
+}
+
+/* HISTORY */
+function loadHistory(){
+let html="";
+bills.forEach(b=>{
+html+=`<tr>
+<td>${b.id}</td>
+<td>${b.customer}</td>
+<td>${b.total}</td>
+<td>${b.status}</td>
+</tr>`;
+});
+historyTable.innerHTML=html;
 }
 
 </script>
