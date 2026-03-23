@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>THAI CHINA FABRIC - SENIOR SOFT WEB</title>
+<title>THAI CHINA FABRIC ERP</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -35,13 +35,11 @@ input, select { width:100%; padding:4px; }
 
 <div class="topbar">
   <button onclick="showPage('salePage')">ขาย</button>
-  <button onclick="showPage('taxPage')">ใบกำกับภาษี</button>
   <button onclick="showPage('receiptPage')">ใบเสร็จ</button>
   <button onclick="showPage('customerPage')">ลูกค้า</button>
   <button onclick="showPage('debtPage')">ลูกหนี้</button>
   <button onclick="showPage('reportPage')">รายงาน</button>
   <button onclick="showPage('dashboardPage')">Dashboard</button>
-  <button onclick="backupData()">Backup</button>
 </div>
 
 <div class="container">
@@ -91,17 +89,26 @@ VAT 7%: <span id="vat">0</span><br>
 
 วิธีชำระเงิน:
 <select id="payment">
-<option>เงินสด</option>
-<option>โอน</option>
-<option>CREDIT</option>
+<option value="เงินสด">เงินสด</option>
+<option value="โอน">โอน</option>
+<option value="CREDIT">CREDIT</option>
 </select>
 </div>
 
 <button class="btn" onclick="saveInvoice()">บันทึก</button>
-<button class="btn" onclick="printPDF('invoiceArea','Invoice.pdf')">PDF</button>
+<button class="btn" onclick="printPDF()">PDF</button>
 </div>
 
-<!-- CUSTOMER HISTORY -->
+<!-- RECEIPT AUTO -->
+<div id="receiptPage" class="card" style="display:none">
+<h3>ใบเสร็จรับเงิน</h3>
+<table>
+<thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th><th>วันที่</th></tr></thead>
+<tbody id="receiptTable"></tbody>
+</table>
+</div>
+
+<!-- CUSTOMER -->
 <div id="customerPage" class="card" style="display:none">
 <h3>ประวัติลูกค้า</h3>
 <input type="text" id="searchCustomer" placeholder="ชื่อลูกค้า" oninput="loadCustomerHistory()">
@@ -139,7 +146,7 @@ VAT 7%: <span id="vat">0</span><br>
 
 <!-- DASHBOARD -->
 <div id="dashboardPage" style="display:none">
-<div class="dashboard-box">ยอดขายเดือนนี้<br><span id="monthSales">0</span></div>
+<div class="dashboard-box">ยอดขายรวม<br><span id="monthSales">0</span></div>
 <div class="dashboard-box">ลูกหนี้<br><span id="debtTotal">0</span></div>
 <div class="dashboard-box">ลูกค้า VIP<br><span id="vipName">-</span></div>
 
@@ -163,12 +170,13 @@ let counter=1;
 document.getElementById('invNo').innerText='INV-'+counter;
 
 function showPage(page){
-['salePage','customerPage','debtPage','reportPage','dashboardPage'].forEach(p=>document.getElementById(p).style.display='none');
+['salePage','receiptPage','customerPage','debtPage','reportPage','dashboardPage'].forEach(p=>document.getElementById(p).style.display='none');
 document.getElementById(page).style.display='block';
 loadReport();
 loadVIP();
 loadDebt();
 loadDashboard();
+loadReceipt();
 }
 
 function addRow(){
@@ -211,12 +219,30 @@ let docNo=document.getElementById('invNo').innerText;
 let customer=document.getElementById('customerName').value;
 let total=document.getElementById('grandTotal').innerText;
 let payment=document.getElementById('payment').value;
+let date=document.getElementById('date').value;
 
 db.collection('documents').add({docNo,customer,total,payment,date:new Date()});
+
+// auto receipt
+if(payment!='CREDIT'){
+  db.collection('receipts').add({docNo,customer,total,date:new Date()});
+}
 
 counter++;
 document.getElementById('invNo').innerText='INV-'+counter;
 alert('บันทึกเรียบร้อย');
+}
+
+function loadReceipt(){
+db.collection('receipts').get().then(snapshot=>{
+let table=document.getElementById('receiptTable');
+table.innerHTML='';
+snapshot.forEach(doc=>{
+let d=doc.data();
+let row=table.insertRow();
+row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td><td>${new Date(d.date.seconds*1000).toLocaleDateString()}</td>`;
+});
+});
 }
 
 function loadReport(){
@@ -302,11 +328,11 @@ data:{labels:Object.keys(totals),datasets:[{label:'ยอดขาย',data:Obje
 });
 }
 
-function printPDF(area,file){
+function printPDF(){
 const { jsPDF } = window.jspdf;
 const doc = new jsPDF('p','mm','a4');
-doc.html(document.getElementById(area),{
-callback:function(doc){ doc.save(file); },
+doc.html(document.getElementById('invoiceArea'),{
+callback:function(doc){ doc.save('Invoice.pdf'); },
 x:10,y:10,width:190
 });
 }
@@ -319,18 +345,6 @@ let ws=XLSX.utils.json_to_sheet(data);
 let wb=XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,'Report');
 XLSX.writeFile(wb,'report.xlsx');
-});
-}
-
-function backupData(){
-db.collection('documents').get().then(snapshot=>{
-let data=[];
-snapshot.forEach(doc=> data.push(doc.data()));
-let blob=new Blob([JSON.stringify(data)],{type:'application/json'});
-let a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='backup.json';
-a.click();
 });
 }
 </script>
