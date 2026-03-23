@@ -5,11 +5,11 @@
   <title>THAI CHINA FABRIC CLOUD ERP</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { font-family: 'Segoe UI'; margin:0; background:#eef1f7; }
-    .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:10px; }
+    .menu { background:#1f2a44; color:white; padding:15px; display:flex; gap:10px; flex-wrap:wrap; }
     .menu button { background:none; border:none; color:white; cursor:pointer; }
     .container { padding:20px; }
     .box { background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
@@ -24,13 +24,15 @@
 <body>
 
 <div class="menu">
-  <button onclick="openDoc()">ออกบิล</button>
+  <button onclick="openDoc()">ออกใบแจ้งหนี้</button>
+  <button onclick="showPage('customerHistory')">ประวัติลูกค้า</button>
+  <button onclick="showPage('vip')">ลูกค้า VIP</button>
+  <button onclick="showPage('debt')">ลูกหนี้ครบกำหนด</button>
   <button onclick="showPage('dashboard')">Dashboard</button>
-  <button onclick="showPage('report')">รายงาน</button>
-  <button onclick="showPage('customerReport')">ยอดขายตามลูกค้า</button>
 </div>
 
 <div class="container">
+
   <div id="documentPage" class="box">
     <h2>ใบแจ้งหนี้</h2>
     เลขที่: <b id="docNo"></b>
@@ -43,9 +45,8 @@
           <th>ลำดับ</th>
           <th>รายการผ้า</th>
           <th>จำนวน</th>
-          <th>หลา</th>
           <th>โหล</th>
-          <th>ราคา</th>
+          <th>หลา</th>
           <th>ส่วนลด</th>
           <th>รวม</th>
         </tr>
@@ -53,7 +54,8 @@
       <tbody></tbody>
     </table>
 
-    <button class="btn" onclick="addRow()">เพิ่ม</button>
+    <button class="btn" onclick="addRow()">เพิ่มรายการ</button>
+
     <h3>รวม: <span id="grandTotal">0</span></h3>
 
     <select id="payment">
@@ -63,33 +65,43 @@
     </select>
 
     <button class="btn" onclick="saveDoc()">บันทึก</button>
+    <button class="btn" onclick="generatePDF()">PDF</button>
+  </div>
+
+  <div id="customerHistory" class="box" style="display:none">
+    <h2>ประวัติลูกค้า</h2>
+    <input type="text" id="searchCustomer" placeholder="ชื่อลูกค้า" oninput="loadCustomerHistory()">
+    <table>
+      <thead><tr><th>เลขที่</th><th>รายการ</th><th>ยอด</th></tr></thead>
+      <tbody id="customerHistoryTable"></tbody>
+    </table>
+    <h3>ยอดซื้อสะสม: <span id="customerTotal">0</span></h3>
+  </div>
+
+  <div id="vip" class="box" style="display:none">
+    <h2>ลูกค้า VIP (เรียงยอดซื้อ)</h2>
+    <table>
+      <thead><tr><th>ลูกค้า</th><th>ยอดซื้อรวม</th></tr></thead>
+      <tbody id="vipTable"></tbody>
+    </table>
+  </div>
+
+  <div id="debt" class="box" style="display:none">
+    <h2>ลูกหนี้ครบกำหนด</h2>
+    <table>
+      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th></tr></thead>
+      <tbody id="debtTable"></tbody>
+    </table>
   </div>
 
   <div id="dashboard" class="box" style="display:none">
-    <h2>Dashboard</h2>
+    <h2>Dashboard ยอดขาย</h2>
     <canvas id="salesChart"></canvas>
   </div>
 
-  <div id="report" class="box" style="display:none">
-    <h2>รายงานทั้งหมด</h2>
-    <table>
-      <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>ยอด</th></tr></thead>
-      <tbody id="reportTable"></tbody>
-    </table>
-  </div>
-
-  <div id="customerReport" class="box" style="display:none">
-    <h2>ยอดขายตามลูกค้า</h2>
-    <input type="text" id="searchCustomer" placeholder="พิมพ์ชื่อลูกค้า" oninput="searchCustomer()">
-    <table>
-      <thead><tr><th>เลขที่</th><th>ยอด</th></tr></thead>
-      <tbody id="customerTable"></tbody>
-    </table>
-  </div>
 </div>
 
 <script>
-// Firebase config (ต้องไปเอาจาก Firebase)
 var firebaseConfig = {
   apiKey: "YOUR-API-KEY",
   authDomain: "YOUR-PROJECT.firebaseapp.com",
@@ -105,38 +117,46 @@ function openDoc(){ showPage('documentPage'); }
 
 function showPage(page){
   document.getElementById('documentPage').style.display='none';
+  document.getElementById('customerHistory').style.display='none';
+  document.getElementById('vip').style.display='none';
+  document.getElementById('debt').style.display='none';
   document.getElementById('dashboard').style.display='none';
-  document.getElementById('report').style.display='none';
-  document.getElementById('customerReport').style.display='none';
   document.getElementById(page).style.display='block';
-  loadReport();
+  loadVIP();
+  loadDebt();
   loadChart();
 }
 
 function addRow(){
-  let table = document.querySelector('#itemTable tbody');
-  let row = table.insertRow();
-  let rowCount = table.rows.length;
-  row.innerHTML = `
+  let table=document.querySelector('#itemTable tbody');
+  let rowCount=table.rows.length+1;
+  let row=table.insertRow();
+  row.innerHTML=`
     <td>${rowCount}</td>
     <td><input type='text'></td>
     <td><input type='number' class='qty' oninput='calculate()'></td>
-    <td><input type='number' class='price' oninput='calculate()'></td>
+    <td><input type='number' class='dozen' oninput='calculate()'></td>
+    <td><input type='number' class='yard' oninput='calculate()'></td>
+    <td><input type='number' class='disc' value='0' oninput='calculate()'></td>
     <td class='total'>0</td>`;
 }
 addRow();
 
 function calculate(){
   let qty=document.querySelectorAll('.qty');
-  let price=document.querySelectorAll('.price');
+  let dozen=document.querySelectorAll('.dozen');
+  let yard=document.querySelectorAll('.yard');
+  let disc=document.querySelectorAll('.disc');
   let total=document.querySelectorAll('.total');
-  let sum=0;
+  let sumTotal=0;
+
   for(let i=0;i<qty.length;i++){
-    let s=(qty[i].value||0)*(price[i].value||0);
-    total[i].innerText=s;
-    sum+=s;
+    let price=((dozen[i].value||0)*12)+((yard[i].value||0));
+    let sum=(qty[i].value||0)*price-(disc[i].value||0);
+    total[i].innerText=sum.toFixed(2);
+    sumTotal+=sum;
   }
-  document.getElementById('grandTotal').innerText=sum;
+  document.getElementById('grandTotal').innerText=sumTotal.toFixed(2);
 }
 
 function saveDoc(){
@@ -149,30 +169,53 @@ function saveDoc(){
 
   counter++;
   document.getElementById('docNo').innerText='INV-'+counter;
-  alert('บันทึกเรียบร้อย (เก็บออนไลน์)');
+  alert('บันทึกเรียบร้อย');
 }
 
-function loadReport(){
-  let table=document.getElementById('reportTable');
-  table.innerHTML='';
-  db.collection('documents').get().then(snapshot=>{
-    snapshot.forEach(doc=>{
-      let d=doc.data();
-      let row=table.insertRow();
-      row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td>`;
-    });
-  });
-}
-
-function searchCustomer(){
+function loadCustomerHistory(){
   let name=document.getElementById('searchCustomer').value;
-  let table=document.getElementById('customerTable');
+  let table=document.getElementById('customerHistoryTable');
   table.innerHTML='';
+  let totalSum=0;
+
   db.collection('documents').where('customer','==',name).get().then(snapshot=>{
     snapshot.forEach(doc=>{
       let d=doc.data();
       let row=table.insertRow();
-      row.innerHTML=`<td>${d.docNo}</td><td>${d.total}</td>`;
+      row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td>`;
+      totalSum+=Number(d.total);
+    });
+    document.getElementById('customerTotal').innerText=totalSum.toFixed(2);
+  });
+}
+
+function loadVIP(){
+  db.collection('documents').get().then(snapshot=>{
+    let totals={};
+    snapshot.forEach(doc=>{
+      let d=doc.data();
+      if(!totals[d.customer]) totals[d.customer]=0;
+      totals[d.customer]+=Number(d.total);
+    });
+
+    let sorted=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+    let table=document.getElementById('vipTable');
+    table.innerHTML='';
+    sorted.forEach(x=>{
+      let row=table.insertRow();
+      row.innerHTML=`<td>${x[0]}</td><td>${x[1].toFixed(2)}</td>`;
+    });
+  });
+}
+
+function loadDebt(){
+  db.collection('documents').where('payment','==','CREDIT').get().then(snapshot=>{
+    let table=document.getElementById('debtTable');
+    table.innerHTML='';
+    snapshot.forEach(doc=>{
+      let d=doc.data();
+      let row=table.insertRow();
+      row.innerHTML=`<td>${d.docNo}</td><td>${d.customer}</td><td>${d.total}</td>`;
     });
   });
 }
@@ -191,6 +234,21 @@ function loadChart(){
       type:'bar',
       data:{labels:Object.keys(totals),datasets:[{label:'ยอดขาย',data:Object.values(totals)}]}
     });
+  });
+}
+
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const content = document.getElementById("documentPage");
+
+  await doc.html(content, {
+    callback: function (doc) {
+      doc.save("invoice_A4.pdf");
+    },
+    x: 10,
+    y: 10,
+    width: 190
   });
 }
 </script>
